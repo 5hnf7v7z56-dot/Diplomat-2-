@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Diplomaten gegen Saboteure</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#12151c;color:#eee;font:16px system-ui,sans-serif;padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom)}
+#app{max-width:480px;margin:0 auto;padding:12px 0 24px}
+h1,h2{text-align:center;margin:.5em 0}
+input,button{font:inherit;border-radius:10px;border:0;padding:13px;width:100%;margin:4px 0}
+input{background:#232733;color:#fff}
+button{background:#363b4d;color:#fff}
+button:active{filter:brightness(1.3)}
+button.on{background:#2563eb}button:disabled{opacity:.4}
+.go,.ja{background:#16a34a}.nein{background:#dc2626}
+.sm{width:auto;padding:8px 12px;margin:0}
+.top{display:flex;justify-content:space-between;align-items:center}
+.role{text-align:center;font-size:26px;font-weight:700;padding:16px;border-radius:12px;margin:8px 0}
+.board{display:flex;gap:6px;margin:10px 0}
+.board span{flex:1;text-align:center;background:#232733;border-radius:8px;padding:8px 2px;font-size:13px}
+.p{display:flex;align-items:center;justify-content:space-between;background:#1c2029;border-radius:8px;padding:8px 10px;margin:3px 0}
+.panel{background:#1c2029;border-radius:12px;padding:12px;margin:10px 0}
+.priv{color:#fcd34d;font-weight:600}
+.card{background:#232733;border-radius:12px;padding:12px;margin:8px 0}
+.opt{background:#12151c;border-radius:8px;padding:8px;margin-top:6px;font-size:14px}
+.row{display:flex;gap:8px}
+.kb{width:auto;margin:0;padding:4px 10px;background:#7f1d1d}
+#tm{font-size:34px;font-weight:700;text-align:center}
+.log div{font-size:13px;color:#999;padding:2px 0}small{color:#999}
+</style></head><body><div id="app"></div>
+<script>
+let S=null,id=localStorage.kr_id,show=false,sel=[],tS=null;
+const $=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RC={D:['Diplomat','#2563eb'],A:['Analyst','#0891b2'],S:['Saboteur','#dc2626'],T:['Tyrann','#7f1d1d']};
+async function api(o){
+  o.id=id;
+  try{const r=await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});
+    const j=await r.json();if(j.err)alert(j.err);return j}
+  catch(e){alert('Keine Verbindung zum Server');return{}}
+}
+const act=(t,x)=>api({t,x});
+const tg=i=>{sel=sel.includes(i)?sel.filter(k=>k!=i):sel.length<3?sel.concat(i):sel;draw()};
+async function join(){
+  const j=await api({t:'join',name:document.getElementById('n').value});
+  if(j.id){id=j.id;localStorage.kr_id=id;connect()}
+}
+function connect(){
+  const es=new EventSource('/events?id='+id);
+  es.onmessage=e=>{S=JSON.parse(e.data);draw()};
+  es.onerror=()=>{if(es.readyState==2){localStorage.removeItem('kr_id');id=null;S=null;draw()}};
+}
+function draw(){
+  if(!S){$.innerHTML='<h1>Diplomaten gegen Saboteure</h1><input id="n" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="go" onclick="join()">Beitreten</button>';return}
+  const m=S.me,L=S.pl,ph=S.ph,n=L.length,nm=i=>(L.find(p=>p.id==i)||{}).name||'?',pres=esc(nm(S.pres));
+  const inTeam=S.team.includes(m.id),voted=S.voted.includes(m.id);
+  if(ph!='team')sel=[];
+  if(ph=='talk'){if(!tS)tS=Date.now()}else tS=null;
+  let h='<div class="top"><b>'+esc(m.name)+'</b>'+(m.role?'<button class="sm" onclick="show=!show;draw()">'+(show?'Verbergen':'Rolle & Infos')+'</button>':'')+'</div>';
+  if(m.role&&show){
+    h+='<div class="role" style="background:'+RC[m.role][1]+'">'+RC[m.role][0]+'</div>';
+    if(m.role=='S')h+='<div class="panel">Deine Leute: <b>'+L.filter(p=>p.role&&p.id!=m.id).map(p=>esc(p.name)+(p.role=='T'?' (Tyrann)':'')).join(', ')+'</b></div>';
+    if(S.priv.length)h+='<div class="panel priv">'+S.priv.map(esc).join('<br>')+'</div>';
+  }
+  const ns=[0,0,0,0,0,2,2,3,3,4,4][n]||0;
+  h+='<div class="board"><span>🕊️ Gelöst '+S.sol+'/5</span><span>🔥 Eskaliert '+S.esc+'/5</span></div>';
+  if(n>=5)h+='<div class="board"><span>😈 '+ns+' Saboteure (inkl. Tyrann)</span><span>🕊️ '+(n-ns)+' Diplomaten</span></div>';
+  h+=L.map(p=>'<div class="p"><span>'+esc(p.name)+(p.bot?' 🤖':'')+(p.id==S.pres&&ph!='lobby'?' 🎩':'')+(S.team.includes(p.id)?' 👥':'')+(p.on?'':' ⚠️')+((p.role&&ph=='over')?' <small>['+RC[p.role][0]+']</small>':'')+'</span>'+((m.host&&ph=='lobby'&&p.id!=m.id)?'<button class="kb" onclick="act(\'kick\',\''+p.id+'\')">✕</button>':'')+'</div>').join('');
+  let s='',c=S.card;
+  const cardH=c?'<div class="card"><b>'+esc(c.t)+'</b><p>'+esc(c.s)+'</p><div class="opt"><b>A:</b> '+esc(c.a)+'</div><div class="opt"><b>B:</b> '+esc(c.b)+'</div></div>':'';
+  const yn=(t)=>voted?'<p>Warten… '+S.voted.length+'/'+n+' abgestimmt</p>':'<div class="row"><button class="ja" onclick="act(\''+t+'\',true)">JA</button><button class="nein" onclick="act(\''+t+'\',false)">NEIN</button></div>';
+  if(ph=='lobby'){
+    s='<p>'+n+'/10 Spieler (mind. 5)</p>'+(m.host?'<button class="go" onclick="act(\'start\')">Spiel starten</button>':'<p>Warte auf den Host…</p>');
+    // TESTMODUS-BEGIN
+    if(m.host)s+='<p><small>Testmodus:</small></p><div class="row"><button onclick="act(\'bot\')">+ Bot</button><button onclick="act(\'fill\')">Auf 7 füllen</button></div>';
+    // TESTMODUS-END
+  }else if(ph=='team'){
+    s=cardH+(m.id==S.pres?'<p>Du bist Vorsitz – wähle 3 Teammitglieder ('+sel.length+'/3):</p>'+L.map(p=>'<button class="'+(sel.includes(p.id)?'on':'')+'" onclick="tg(\''+p.id+'\')">'+esc(p.name)+'</button>').join('')+'<button class="go" '+(sel.length==3?'':'disabled')+' onclick="act(\'team\',sel)">Team bestätigen</button>':'<p>'+pres+' stellt das Krisenteam zusammen…</p>')+(S.acc?'':'<button onclick="act(\'acc\')">⚖️ Anklage beantragen (1× pro Spiel)</button>');
+  }else if(ph=='talk'){
+    s=cardH+'<p>Team: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p><div id="tm">2:00</div><p><small>Das Team verhandelt offen und verkündet seine Entscheidung.</small></p>'+((m.role=='A'&&!S.an)?'<button onclick="act(\'an\')">🔎 Analyst: Wahrheit erfragen (1×)</button>':'')+(m.id==S.pres?'<button class="go" onclick="act(\'go\')">Verhandlung beenden → Abstimmung</button>':'');
+  }else if(ph=='vote'){
+    s=cardH+(inTeam&&!voted?'<p>Heimliche Wahl:</p><div class="row"><button class="go" onclick="act(\'cv\',\'A\')">Option A</button><button class="go" onclick="act(\'cv\',\'B\')">Option B</button></div>':'<p>Das Team wählt heimlich… '+S.voted.length+'/3</p>');
+  }else if(ph=='result'||(ph=='over'&&S.res)){
+    s=(S.res?'<h2>'+(S.res.esc?'🔥 Eskaliert':'🕊️ Gelöst')+'</h2><p>Umgesetzt: Option '+S.res.ch+' ('+S.res.na+'× A, '+S.res.nb+'× B)</p>':'')+((ph=='result'&&m.id==S.pres)?'<button class="go" onclick="act(\'next\')">Nächste Runde</button>':ph=='result'?'<p>Warte auf '+pres+'…</p>':'');
+  }
+  if(ph=='avote')s='<p>⚖️ '+(S.vq=='hold'?esc(nm(S.asker))+' beantragt eine Anklage. Durchführen?':'Anklage gegen <b>'+esc(nm(S.asp))+'</b>. Wirklich anklagen?')+'</p>'+yn('av');
+  if(ph=='apick')s=m.id==S.asker?'<p>Wen klagst du als Tyrann an?</p>'+L.filter(p=>p.id!=m.id).map(p=>'<button onclick="act(\'ap\',\''+p.id+'\')">'+esc(p.name)+'</button>').join(''):'<p>'+esc(nm(S.asker))+' wählt einen Verdächtigen…</p>';
+  if(ph=='over')s+='<h2>'+(S.win=='D'?'🕊️ Diplomaten gewinnen':'😈 Saboteure gewinnen')+'</h2><p>'+esc(S.why)+'</p>'+(m.host?'<button class="go" onclick="act(\'new\')">Neues Spiel (Lobby)</button>':'');
+  if(m.host&&ph!='lobby'&&ph!='over')s+='<button onclick="if(confirm(\'Spiel abbrechen und zurück zur Lobby?\'))act(\'new\')">Spiel neu starten (Host)</button>';
+  h+='<div class="panel">'+s+'</div><div class="log">'+S.log.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div>';
+  $.innerHTML=h;
+}
+setInterval(()=>{const e=document.getElementById('tm');if(e&&tS){const t=Math.max(0,120-Math.floor((Date.now()-tS)/1000));e.textContent=Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}},500);
+if(id)connect();else draw();
+</script></body></html>
