@@ -27,9 +27,17 @@ button.on{background:#2563eb}button:disabled{opacity:.4}
 .kb{width:auto;margin:0;padding:4px 10px;background:#7f1d1d}
 #tm{font-size:34px;font-weight:700;text-align:center}
 .log div{font-size:13px;color:#999;padding:2px 0}small{color:#999}
+.bd{margin:10px 0}.bl,.bf{display:flex;gap:5px;padding:6px;border-radius:10px;margin:4px 0}
+.bl{background:#1e3a8a55}.bf{background:#7f1d1d55}
+.sl{flex:1;height:56px;border:2px dashed #666;border-radius:7px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:18px;overflow:hidden}
+.sl i{font-style:normal;font-size:9px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sl.P{background:#2563eb;border:2px solid #93c5fd}.sl.E{background:#dc2626;border:2px solid #fca5a5}
+#ov{position:fixed;inset:0;background:#000d;z-index:9;padding:calc(env(safe-area-inset-top) + 12px) 12px 12px;overflow:auto}
+.ovb{max-width:480px;margin:0 auto}
 </style></head><body><div id="app"></div>
 <script>
-let S=null,id=localStorage.kr_id,show=false,sel=[],tS=null;
+const LOGO=`<svg viewBox="0 0 320 200" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="gl" cx="50%" cy="50%" r="50%"><stop offset="70%" stop-color="#fff" stop-opacity="0"/><stop offset="100%" stop-color="#fff" stop-opacity=".18"/></radialGradient><linearGradient id="bl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#1e3a8a"/></linearGradient><linearGradient id="rd" x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ef4444"/><stop offset="1" stop-color="#7f1d1d"/></linearGradient></defs><path d="M160 20A80 80 0 0 0 160 180Z" fill="url(#bl)"/><path d="M160 20A80 80 0 0 1 160 180Z" fill="url(#rd)"/><g fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="1.2"><ellipse cx="160" cy="100" rx="40" ry="80"/><ellipse cx="160" cy="100" rx="80" ry="30"/><line x1="80" y1="100" x2="240" y2="100"/><line x1="160" y1="20" x2="160" y2="180"/></g><circle cx="160" cy="100" r="80" fill="url(#gl)" stroke="#e5e7eb" stroke-opacity=".6" stroke-width="2"/><g transform="translate(98,78)"><path d="M0 26 L-14 36 L-2 20Z" fill="#fff"/><path d="M2 26C10 8 32 6 46 18C52 10 58 8 63 10C60 16 58 20 54 24C42 38 18 40 2 26Z" fill="#fff"/><path d="M22 18C22 -4 34 -12 46 -16C42 -2 38 8 34 18Z" fill="#dbeafe"/><path d="M63 10L72 13L62 15Z" fill="#fbbf24"/><circle cx="57" cy="12" r="1.6" fill="#1e3a8a"/><path d="M30 40C34 46 42 48 50 46" stroke="#86efac" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M36 44l3-7M42 46l1-8M47 46l4-6" stroke="#86efac" stroke-width="2" stroke-linecap="round"/></g><g transform="translate(176,66)"><path d="M25 70C5 62 6 42 16 30C17 40 22 42 24 36C22 24 30 14 34 4C40 22 52 32 49 52C47 64 38 72 25 70Z" fill="#fb923c"/><path d="M27 68C17 62 18 52 24 46C27 54 34 55 34 62C34 66 31 69 27 68Z" fill="#fde047"/></g></svg>`;
+let S=null,id=localStorage.kr_id,show=false,sel=[],tS=null,info=false;
 const $=document.getElementById('app');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const RC={D:['Diplomat','#2563eb'],A:['Analyst','#0891b2'],S:['Saboteur','#dc2626'],T:['Tyrann','#7f1d1d']};
@@ -51,19 +59,21 @@ function connect(){
   es.onerror=()=>{if(es.readyState==2){localStorage.removeItem('kr_id');id=null;S=null;draw()}};
 }
 function draw(){
-  if(!S){$.innerHTML='<h1>Diplomaten gegen Saboteure</h1><input id="n" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="go" onclick="join()">Beitreten</button>';return}
+  if(!S){$.innerHTML='<div style="max-width:280px;margin:0 auto">'+LOGO+'</div><h1>Diplomaten gegen Saboteure</h1><input id="n" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="go" onclick="join()">Beitreten</button>';return}
   const m=S.me,L=S.pl,ph=S.ph,n=L.length,nm=i=>(L.find(p=>p.id==i)||{}).name||'?',pres=esc(nm(S.pres));
   const inTeam=S.team.includes(m.id),voted=S.voted.includes(m.id);
   if(ph!='team')sel=[];
   if(ph=='talk'){if(!tS)tS=Date.now()}else tS=null;
-  let h='<div class="top"><b>'+esc(m.name)+'</b>'+(m.role?'<button class="sm" onclick="show=!show;draw()">'+(show?'Verbergen':'Rolle & Infos')+'</button>':'')+'</div>';
+  let h='<div class="top"><b>'+esc(m.name)+'</b>'+'<span>'+(m.role?'<button class="sm" onclick="show=!show;draw()">'+(show?'Verbergen':'Rolle & Infos')+'</button> ':'')+'<button class="sm" onclick="info=true;draw()">ℹ️ Verlauf</button></span></div>';
   if(m.role&&show){
     h+='<div class="role" style="background:'+RC[m.role][1]+'">'+RC[m.role][0]+'</div>';
     if(m.role=='S')h+='<div class="panel">Deine Leute: <b>'+L.filter(p=>p.role&&p.id!=m.id).map(p=>esc(p.name)+(p.role=='T'?' (Tyrann)':'')).join(', ')+'</b></div>';
     if(S.priv.length)h+='<div class="panel priv">'+S.priv.map(esc).join('<br>')+'</div>';
   }
   const ns=[0,0,0,0,0,2,2,3,3,4,4][n]||0;
-  h+='<div class="board"><span>🕊️ Gelöst '+S.sol+'/5</span><span>🔥 Eskaliert '+S.esc+'/5</span></div>';
+  const row=(e,ic,cl)=>{const l=S.hist.filter(x=>x.e==e);let r='';for(let i=0;i<5;i++)r+='<div class="sl'+(l[i]?' '+cl:'')+'">'+(l[i]?ic+'<i>'+esc(l[i].t.split(' ')[0])+'</i>':'')+'</div>';return r};
+  h+='<div class="bd"><div class="bl">'+row(false,'🕊️','P')+'</div><div class="bf">'+row(true,'🔥','E')+'</div></div>';
+  h+='<div class="board"><span>🕊️ noch '+(5-S.sol)+' bis Frieden</span><span>🔥 noch '+(5-S.esc)+' bis Eskalation</span></div>';
   if(n>=5)h+='<div class="board"><span>😈 '+ns+' Saboteure (inkl. Tyrann)</span><span>🕊️ '+(n-ns)+' Diplomaten</span></div>';
   h+=L.map(p=>'<div class="p"><span>'+esc(p.name)+(p.bot?' 🤖':'')+(p.id==S.pres&&ph!='lobby'?' 🎩':'')+(S.team.includes(p.id)?' 👥':'')+(p.on?'':' ⚠️')+((p.role&&ph=='over')?' <small>['+RC[p.role][0]+']</small>':'')+'</span>'+((m.host&&ph=='lobby'&&p.id!=m.id)?'<button class="kb" onclick="act(\'kick\',\''+p.id+'\')">✕</button>':'')+'</div>').join('');
   let s='',c=S.card;
@@ -87,7 +97,8 @@ function draw(){
   if(ph=='apick')s=m.id==S.asker?'<p>Wen klagst du als Tyrann an?</p>'+L.filter(p=>p.id!=m.id).map(p=>'<button onclick="act(\'ap\',\''+p.id+'\')">'+esc(p.name)+'</button>').join(''):'<p>'+esc(nm(S.asker))+' wählt einen Verdächtigen…</p>';
   if(ph=='over')s+='<h2>'+(S.win=='D'?'🕊️ Diplomaten gewinnen':'😈 Saboteure gewinnen')+'</h2><p>'+esc(S.why)+'</p>'+(m.host?'<button class="go" onclick="act(\'new\')">Neues Spiel (Lobby)</button>':'');
   if(m.host&&ph!='lobby'&&ph!='over')s+='<button onclick="if(confirm(\'Spiel abbrechen und zurück zur Lobby?\'))act(\'new\')">Spiel neu starten (Host)</button>';
-  h+='<div class="panel">'+s+'</div><div class="log">'+S.log.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div>';
+  h+='<div class="panel">'+s+'</div>';
+  if(info)h+='<div id="ov"><div class="ovb"><div class="top"><b>Verlauf</b><button class="sm" onclick="info=false;draw()">✕ Schließen</button></div><div class="panel"><b>Krisen bisher</b>'+(S.hist.length?S.hist.map((x,i)=>'<div>'+(i+1)+'. '+(x.e?'🔥':'🕊️')+' '+esc(x.t)+' – '+(x.e?'eskaliert':'gelöst')+'</div>').join(''):'<div><small>Noch keine Krise.</small></div>')+'</div><div class="panel log"><b>Ereignisse</b>'+S.log.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div></div></div>';
   $.innerHTML=h;
 }
 setInterval(()=>{const e=document.getElementById('tm');if(e&&tS){const t=Math.max(0,120-Math.floor((Date.now()-tS)/1000));e.textContent=Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}},500);

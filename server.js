@@ -15,7 +15,7 @@ const CARDS=[
 ['Hainan 2001','Ein US-Spionageflugzeug stößt mit einem chinesischen Kampfjet zusammen. Der chinesische Pilot stirbt, das US-Flugzeug landet auf der chinesischen Insel Hainan, und China hält die 24 Besatzungsmitglieder fest. Ihr beratet die USA.','Nichts zugeben und Druck machen. Stärke, aber die Besatzung bleibt länger.','Bedauern ausdrücken, ohne Schuld einzugestehen. Die Besatzung kommt wohl frei, aber Kritik zuhause.'],
 ['Nil-Staudamm','Äthiopien baut am Nil einen riesigen Staudamm für Strom für Millionen Menschen. Wird der See schnell gefüllt, bekommt Ägypten flussabwärts weniger Wasser und droht mit Gewalt. Ihr beratet Äthiopien.','Den See in wenigen Jahren füllen. Schnell Strom, aber Streit mit Ägypten.','Über zehn Jahre füllen und ein Abkommen schließen. Sicher, aber der Strom kommt später.']];
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,idx:0,pres:null,card:null,bad:'A',team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,an:false,priv:{},deck:[],win:null,why:''};for(const p of Object.values(P))p.role=null};
+const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,bad:'A',team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,an:false,priv:{},deck:[],win:null,why:''};for(const p of Object.values(P))p.role=null};
 reset();
 const log=m=>G.log.push(m),nm=i=>P[i].name;
 const win=(w,why)=>{G.ph='over';G.win=w;G.why=why;log(why)};
@@ -33,7 +33,7 @@ function start(){
 }
 function resolve(){
   const na=Object.values(G.votes).filter(c=>c=='A').length,ch=na>=2?'A':'B',esc=ch==G.bad;
-  G.res={na,nb:3-na,ch,esc};esc?G.esc++:G.sol++;
+  G.res={na,nb:3-na,ch,esc};esc?G.esc++:G.sol++;G.hist.push({t:CARDS[G.card][0],e:esc});
   log(CARDS[G.card][0]+': '+(esc?'eskaliert':'gelöst'));
   if(G.sol>=5)win('D','5 Krisen gelöst – die Diplomaten gewinnen!');
   else if(G.esc>=5)win('S','5 Krisen eskaliert – die Saboteure gewinnen!');
@@ -44,7 +44,7 @@ function atally(){
   if(G.vq=='hold'){if(ok){G.ph='apick';log('Anklage genehmigt')}else{G.acc=false;G.ph='team';log('Anklage abgelehnt')}return}
   if(!ok){G.ph='team';log('Die Mehrheit klagt '+nm(G.asp)+' nicht an');return}
   if(P[G.asp].role=='T')return win('D',nm(G.asp)+' war der Tyrann – die Diplomaten gewinnen!');
-  G.esc++;log(nm(G.asp)+' war nicht der Tyrann – Saboteure +1');
+  G.esc++;G.hist.push({t:'Falsche Anklage',e:true});log(nm(G.asp)+' war nicht der Tyrann – Saboteure +1');
   if(G.esc>=5)return win('S','Falsche Anklage und 5 Eskalationen – die Saboteure gewinnen!');
   G.ph='team';
 }
@@ -82,11 +82,11 @@ function act(p,a){
 }
 function view(id){
   const me=P[id],ph=G.ph,over=ph=='over',c=G.card!=null&&ph!='lobby'?CARDS[G.card]:null;
-  return{ph,sol:G.sol,esc:G.esc,me:{id,name:me.name,role:me.role,host:G.order[0]==id},
+  return{ph,sol:G.sol,esc:G.esc,hist:G.hist,me:{id,name:me.name,role:me.role,host:G.order[0]==id},
     pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,on:!!q.res||!!q.bot,bot:!!q.bot,
       role:(over||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T')))?q.role:null}}),
     pres:G.pres,card:c&&{t:c[0],s:c[1],a:c[2],b:c[3]},team:G.team,voted:Object.keys(G.votes),res:G.res,
-    priv:G.priv[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,an:G.an,win:G.win,why:G.why,log:G.log.slice(-8).reverse()};
+    priv:G.priv[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,an:G.an,win:G.win,why:G.why,log:G.log.slice(-40).reverse()};
 }
 // TESTMODUS-BEGIN
 let bt=null;const sched=()=>{if(bt)return;bt=setTimeout(()=>{bt=null;if(botStep())bc()},+process.env.BOTMS||1300)};
