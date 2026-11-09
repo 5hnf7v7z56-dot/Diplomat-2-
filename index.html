@@ -25,7 +25,6 @@ button.on{background:#2563eb}button:disabled{opacity:.4}
 .opt{background:#12151c;border-radius:8px;padding:8px;margin-top:6px;font-size:14px}
 .row{display:flex;gap:8px}
 .kb{width:auto;margin:0;padding:4px 10px;background:#7f1d1d}
-#tm{font-size:34px;font-weight:700;text-align:center}
 .log div{font-size:13px;color:#999;padding:2px 0}small{color:#999}
 .bd{margin:10px 0}.bl,.bf{display:flex;gap:5px;padding:6px;border-radius:10px;margin:4px 0}
 .bl{background:#1e3a8a55}.bf{background:#7f1d1d55}
@@ -40,7 +39,7 @@ body.home::before{background:#12151c}
 .dead{opacity:.55;text-decoration:line-through}
 </style></head><body><div id="app"></div>
 <script>
-let S=null,id=localStorage.kr_id,show=false,sel=[],tS=null,info=false;
+let S=null,id=localStorage.kr_id,show=false,sel=[],info=false;
 const $=document.getElementById('app');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const RC={D:['Diplomat','#2563eb'],A:['Analyst','#0891b2'],S:['Saboteur','#dc2626'],T:['Tyrann','#7f1d1d']};
@@ -51,7 +50,7 @@ async function api(o){
   catch(e){alert('Keine Verbindung zum Server');return{}}
 }
 const act=(t,x)=>api({t,x});
-const tg=i=>{sel=sel.includes(i)?sel.filter(k=>k!=i):sel.length<3?sel.concat(i):sel;draw()};
+const tg=i=>{sel=sel.includes(i)?sel.filter(k=>k!=i):sel.length<2?sel.concat(i):sel;draw()};
 async function join(){
   const j=await api({t:'join',name:document.getElementById('n').value});
   if(j.id){id=j.id;localStorage.kr_id=id;connect()}
@@ -66,11 +65,12 @@ function draw(){document.body.classList.toggle('home',!S);
   const m=S.me,L=S.pl,ph=S.ph,n=L.length,nm=i=>(L.find(p=>p.id==i)||{}).name||'?',pres=esc(nm(S.pres));
   const inTeam=S.team.includes(m.id),voted=S.voted.includes(m.id);
   if(ph!='team')sel=[];
-  if(ph=='talk'){if(!tS)tS=Date.now()}else tS=null;
   let h='<div class="top"><b>'+esc(m.name)+'</b>'+'<span>'+(m.role?'<button class="sm" onclick="show=!show;draw()">'+(show?'Verbergen':'Rolle & Infos')+'</button> ':'')+'<button class="sm" onclick="info=true;draw()">ℹ️ Verlauf</button></span></div>';
   if(m.role&&show){
     h+='<div class="role" style="background:'+RC[m.role][1]+'">'+RC[m.role][0]+'</div>';
-    if(m.role=='S')h+='<div class="panel">Deine Leute: <b>'+L.filter(p=>p.role&&p.id!=m.id).map(p=>esc(p.name)+(p.role=='T'?' (Tyrann)':'')).join(', ')+'</b></div>';
+    h+='<div class="panel"><small>'+({D:'Wähle im Krisenteam immer den friedlichen Weg und finde die Saboteure.',A:'Du kennst die Saboteure (nicht den Tyrannen). Lenke die Diplomaten, aber verrate dich nicht – am Ende dürfen die Saboteure dich erraten.',S:'Eskaliere heimlich im Team, ohne aufzufliegen. Schütze den Tyrannen.',T:'Du führst die Saboteure an. Sie kennen dich, du kennst sie nicht. Fall nicht auf!'})[m.role]+'</small></div>';
+    if(m.role=='S')h+='<div class="panel">Deine Leute: <b>'+L.filter(p=>(p.role=='S'||p.role=='T')&&p.id!=m.id).map(p=>esc(p.name)+(p.role=='T'?' (Tyrann)':'')).join(', ')+'</b></div>';
+    if(m.role=='A')h+='<div class="panel">Die Saboteure (ohne Tyrann): <b>'+L.filter(p=>p.role=='S'&&p.id!=m.id).map(p=>esc(p.name)).join(', ')+'</b></div>';
     if(S.priv.length)h+='<div class="panel priv">'+S.priv.map(esc).join('<br>')+'</div>';
   }
   const ns=[0,0,0,0,0,2,2,3,3,4,4][n]||0;
@@ -80,7 +80,8 @@ function draw(){document.body.classList.toggle('home',!S);
   if(n>=5)h+='<div class="board"><span>😈 Zu Beginn: '+ns+' Saboteure (inkl. Tyrann)</span><span>🕊️ '+(n-ns)+' Diplomaten</span></div>';
   h+=L.map(p=>'<div class="p'+(p.dead?' dead':'')+'"><span>'+(p.dead?'💀 ':'')+esc(p.name)+(p.bot?' 🤖':'')+(p.id==S.pres&&ph!='lobby'?' 🎩':'')+(S.team.includes(p.id)?' 👥':'')+(p.on?'':' ⚠️')+((p.role&&(ph=='over'||p.dead))?' <small>['+RC[p.role][0]+']</small>':'')+'</span>'+((m.host&&ph=='lobby'&&p.id!=m.id)?'<button class="kb" onclick="act(\'kick\',\''+p.id+'\')">✕</button>':'')+'</div>').join('');
   let s='',c=S.card;
-  const cardH=c?'<div class="card"><b>'+esc(c.t)+'</b><p>'+esc(c.s)+'</p><div class="opt"><b>A:</b> '+esc(c.a)+'</div><div class="opt"><b>B:</b> '+esc(c.b)+'</div></div>':'';
+  const cardH=c?'<div class="card"><b>'+esc(c.t)+'</b><p>'+esc(c.s)+'</p>'+c.o.map(o=>'<div class="opt"><b>'+(o.k=='P'?'🕊️ Friedlicher Weg:':'🔥 Eskalationsrisiko:')+'</b> '+esc(o.x)+'</div>').join('')+'</div>':'';
+  const lvH=S.lv?'<small>Letzte Teamwahl: '+S.lv.map(x=>esc(x[0])+(x[1]?' ✅':' ❌')).join(', ')+'</small>':'';
   const yn=(t)=>!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+' abgestimmt</p>':'<div class="row"><button class="ja" onclick="act(\''+t+'\',true)">JA</button><button class="nein" onclick="act(\''+t+'\',false)">NEIN</button></div>';
   if(ph=='lobby'){
     s='<p>'+n+'/10 Spieler (mind. 5)</p>'+(m.host?'<button class="go" onclick="act(\'start\')">Spiel starten</button>':'<p>Warte auf den Host…</p>');
@@ -88,24 +89,24 @@ function draw(){document.body.classList.toggle('home',!S);
     if(m.host)s+='<p><small>Testmodus:</small></p><div class="row"><button onclick="act(\'bot\')">+ Bot</button><button onclick="act(\'fill\')">Auf 7 füllen</button></div>';
     // TESTMODUS-END
   }else if(ph=='team'){
-    s=cardH+(m.id==S.pres?'<p>Du bist Vorsitz – wähle 3 Teammitglieder ('+sel.length+'/3):</p>'+L.filter(p=>!p.dead).map(p=>'<button class="'+(sel.includes(p.id)?'on':'')+'" onclick="tg(\''+p.id+'\')">'+esc(p.name)+'</button>').join('')+'<button class="go" '+(sel.length==3?'':'disabled')+' onclick="act(\'team\',sel)">Team bestätigen</button>':'<p>'+pres+' stellt das Krisenteam zusammen…</p>')+((S.acc||!m.alive)?'':S.esc<3?'<small>⚖️ Anklage möglich ab 3 Eskalationen</small>':'<button onclick="act(\'acc\')">⚖️ Anklage beantragen (1× pro Spiel)</button>');
-  }else if(ph=='talk'){
-    s=cardH+'<p>Team: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p><div id="tm">2:00</div><p><small>Das Team verhandelt offen und verkündet seine Entscheidung.</small></p>'+((m.role=='A'&&!S.an)?'<button onclick="act(\'an\')">🔎 Analyst: Wahrheit erfragen (1×)</button>':'')+(m.id==S.pres?'<button class="go" onclick="act(\'go\')">Verhandlung beenden → Abstimmung</button>':'');
+    s=cardH+(S.rej?'<p>'+lvH+'<br><small>Abgelehnte Teams: '+S.rej+'/3 – bei 3 eskaliert die Krise.</small></p>':'')+(m.id==S.pres?'<p>Du bist Vorsitz und automatisch im Team. Wähle 2 weitere Mitglieder ('+sel.length+'/2):</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="'+(sel.includes(p.id)?'on':'')+'" onclick="tg(\''+p.id+'\')">'+esc(p.name)+'</button>').join('')+'<button class="go" '+(sel.length==2?'':'disabled')+' onclick="act(\'team\',sel)">Team bestätigen</button>':'<p>'+pres+' stellt das Krisenteam zusammen…</p>')+((S.acc||!m.alive)?'':S.esc<3?'<small>⚖️ Anklage möglich ab 3 Eskalationen</small>':'<button onclick="act(\'acc\')">⚖️ Anklage beantragen (1× pro Spiel)</button>');
+  }else if(ph=='tvote'){
+    s=cardH+'<p>Vorsitz <b>'+pres+'</b> schlägt vor: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p><p><small>Redet offen: Vertraut ihr diesem Team?</small></p>'+yn('tv');
   }else if(ph=='vote'){
-    s=cardH+(inTeam&&!voted?'<p>Heimliche Wahl:</p><div class="row"><button class="go" onclick="act(\'cv\',\'A\')">Option A</button><button class="go" onclick="act(\'cv\',\'B\')">Option B</button></div>':'<p>Das Team wählt heimlich… '+S.voted.length+'/3</p>');
+    s=cardH+'<p>Team: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p>'+lvH+(inTeam&&!voted?'<p>Heimliche Wahl:</p><div class="row"><button class="go" onclick="act(\'cv\',\'P\')">🕊️ Friedlich</button><button class="nein" onclick="act(\'cv\',\'E\')">🔥 Eskalieren</button></div>':'<p>Das Team wählt heimlich… '+S.voted.length+'/3</p>');
   }else if(ph=='result'||(ph=='over'&&S.res)){
-    s=(S.res?'<h2>'+(S.res.esc?'🔥 Eskaliert':'🕊️ Gelöst')+'</h2><p>Umgesetzt: Option '+S.res.ch+' ('+S.res.na+'× A, '+S.res.nb+'× B)</p>':'')+((ph=='result'&&m.id==S.pres)?'<button class="go" onclick="act(\'next\')">Nächste Runde</button>':ph=='result'?'<p>Warte auf '+pres+'…</p>':'');
+    s=(S.res?'<h2>'+(S.res.esc?'🔥 Eskaliert':'🕊️ Gelöst')+'</h2><p>'+(S.res.forced?'Dreimal kein Team – die Krise eskaliert von selbst.':S.res.ne+'× Eskalation, '+S.res.np+'× friedlich (nicht sichtbar, von wem)')+'</p>':'')+((ph=='result'&&m.id==S.pres)?'<button class="go" onclick="act(\'next\')">Nächste Runde</button>':ph=='result'?'<p>Warte auf '+pres+'…</p>':'');
   }
   if(ph=='avote')s='<p>⚖️ '+(S.vq=='hold'?esc(nm(S.asker))+' beantragt eine Anklage. Durchführen?':'Anklage gegen <b>'+esc(nm(S.asp))+'</b>. Wirklich anklagen?')+'</p>'+yn('av');
   if(ph=='apick')s=m.id==S.asker?'<p>Wen klagst du als Tyrann an?</p>'+L.filter(p=>p.id!=m.id).map(p=>'<button onclick="act(\'ap\',\''+p.id+'\')">'+esc(p.name)+'</button>').join(''):'<p>'+esc(nm(S.asker))+' wählt einen Verdächtigen…</p>';
   if(ph=='kill')s=m.id==S.pres?'<p>☠️ Stufe 4: Du darfst einen Spieler töten. Seine Rolle wird danach aufgedeckt.</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="nein" onclick="act(\'ki\',\''+p.id+'\')">'+esc(p.name)+'</button>').join(''):'<p>☠️ '+pres+' entscheidet über Leben und Tod…</p>';
   if(ph=='night')s=!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>🌙 Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+'</p>':'<p>🌙 <b>Nacht.</b> Alle Handys zeigen dasselbe. Tippe einen Spieler an. <small>(Nur die Wahl der Saboteure zählt.)</small></p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'nv\',\''+p.id+'\')">'+esc(p.name)+'</button>').join('');
+  if(ph=='guess')s=!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>🎯 Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+'</p>':'<p>🎯 <b>Letzte Chance der Saboteure.</b> Alle Handys zeigen dasselbe. Tippe, wer der Analyst sein könnte. <small>(Nur die Wahl der Saboteure zählt.)</small></p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'nv\',\''+p.id+'\')">'+esc(p.name)+'</button>').join('');
   if(ph=='over')s+='<h2>'+(S.win=='D'?'🕊️ Diplomaten gewinnen':'😈 Saboteure gewinnen')+'</h2><p>'+esc(S.why)+'</p>'+(m.host?'<button class="go" onclick="act(\'new\')">Neues Spiel (Lobby)</button>':'');
   if(m.host&&ph!='lobby'&&ph!='over')s+='<button onclick="if(confirm(\'Spiel abbrechen und zurück zur Lobby?\'))act(\'new\')">Spiel neu starten (Host)</button>';
   h+='<div class="panel">'+s+'</div>';
   if(info)h+='<div id="ov"><div class="ovb"><div class="top"><b>Verlauf</b><button class="sm" onclick="info=false;draw()">✕ Schließen</button></div><div class="panel"><b>Krisen bisher</b>'+(S.hist.length?S.hist.map((x,i)=>'<div>'+(i+1)+'. '+(x.e?'🔥':'🕊️')+' '+esc(x.t)+' – '+(x.e?'eskaliert':'gelöst')+'</div>').join(''):'<div><small>Noch keine Krise.</small></div>')+'</div><div class="panel log"><b>Ereignisse</b>'+S.log.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div></div></div>';
   $.innerHTML=h;
 }
-setInterval(()=>{const e=document.getElementById('tm');if(e&&tS){const t=Math.max(0,120-Math.floor((Date.now()-tS)/1000));e.textContent=Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}},500);
 if(id)connect();else draw();
 </script></body></html>
