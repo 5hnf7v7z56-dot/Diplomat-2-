@@ -1,6 +1,6 @@
 // Diplomaten gegen Saboteure – Prototyp. Start: node server.js
 const http=require('http'),fs=require('fs'),os=require('os'),cr=require('crypto');
-const PORT=process.env.PORT||3000,P={},NEED=1;let G;
+const PORT=process.env.PORT||3000,P={},NEED=1;let G,EV=0;
 const CARDS=[
 ['Faschoda 1898','Britische und französische Truppen erreichen gleichzeitig dasselbe Fort im Sudan. Beide wollen die Region und drohen mit Krieg.','Bleiben und die Region fordern. Stärke zeigen, aber Krieg möglich.','Rückzug anbieten gegen Zugeständnisse woanders. Frieden, aber Gesichtsverlust.'],
 ['Juli-Krise 1914','Ein serbischer Attentäter erschießt den österreichischen Thronfolger. Österreich stellt Serbien ein hartes Ultimatum, Russland stützt Serbien.','Das Heer mobilmachen. Druck für Verhandlungen, aber die Gegner machen auch mobil.','Sofort Gespräche anbieten und die Truppen daheim lassen. Zeit gewinnen, aber die Verbündeten fühlen sich im Stich gelassen.'],
@@ -13,12 +13,26 @@ const CARDS=[
 ['Able Archer 1983','Die NATO hält ein großes Manöver ab, das einen Atomkrieg durchspielt. Die Sowjetunion fürchtet einen echten Angriff und macht ihre Atomwaffen bereit.','Das Manöver wie geplant fortsetzen. Man gibt nicht nach, aber die Gegenseite könnte zuerst schießen.','Das Manöver abbrechen und Gespräche anbieten. Beruhigt die Lage, wirkt aber nachgiebig.'],
 ['Kuwait 1990','Irak wirft Kuwait vor, zu viel Öl zu fördern und den Preis zu drücken, und verlangt Schuldenerlass. Irak zieht Truppen an der Grenze zusammen. Ihr beratet Kuwait.','Zugeständnisse machen (weniger Öl, Schulden erlassen). Frieden, aber Drohungen scheinen zu wirken.','Hart bleiben und Verbündete um Hilfe bitten. Eigene Unabhängigkeit, aber Krieg wird wahrscheinlicher.'],
 ['Hainan 2001','Ein US-Spionageflugzeug stößt mit einem chinesischen Kampfjet zusammen. Der chinesische Pilot stirbt, das US-Flugzeug landet auf der chinesischen Insel Hainan, und China hält die 24 Besatzungsmitglieder fest. Ihr beratet die USA.','Nichts zugeben und Druck machen. Stärke, aber die Besatzung bleibt länger.','Bedauern ausdrücken, ohne Schuld einzugestehen. Die Besatzung kommt wohl frei, aber Kritik zuhause.'],
-['Nil-Staudamm','Äthiopien baut am Nil einen riesigen Staudamm für Strom für Millionen Menschen. Wird der See schnell gefüllt, bekommt Ägypten flussabwärts weniger Wasser und droht mit Gewalt. Ihr beratet Äthiopien.','Den See in wenigen Jahren füllen. Schnell Strom, aber Streit mit Ägypten.','Über zehn Jahre füllen und ein Abkommen schließen. Sicher, aber der Strom kommt später.']];
-const PA='BBAABABBBABB';CARDS.forEach((c,i)=>{if(PA[i]=='B'){const t=c[2];c[2]=c[3];c[3]=t}}); // [2]=friedlicher Weg, [3]=Eskalation
+['Nil-Staudamm','Äthiopien baut am Nil einen riesigen Staudamm für Strom für Millionen Menschen. Wird der See schnell gefüllt, bekommt Ägypten flussabwärts weniger Wasser und droht mit Gewalt. Ihr beratet Äthiopien.','Den See in wenigen Jahren füllen. Schnell Strom, aber Streit mit Ägypten.','Über zehn Jahre füllen und ein Abkommen schließen. Sicher, aber der Strom kommt später.'],
+// neue Karten: [2]=friedlicher Weg, [3]=Eskalation
+['Sechstagekrieg 1967','Ägypten schickt Truppen an die Grenze zu Israel und sperrt die Straße von Tiran, Israels einzigen Seeweg zum Roten Meer. Israel nennt die Sperrung einen Kriegsgrund. Ihr beratet Israel.','Verhandeln und die Großmächte bitten, den Seeweg zu öffnen. Kein Schuss, aber Ägypten kann weiter aufrüsten.','Zuerst angreifen und dem Gegner den Vorteil nehmen. Der Krieg beginnt dann aber sicher.'],
+['Jom-Kippur-Krieg 1973','Ägypten und Syrien greifen Israel an. Die Sowjetunion droht, Truppen zu schicken, und die USA setzen ihre Atomstreitkräfte in erhöhte Alarmbereitschaft. Ihr beratet die USA.','Geheim mit der Sowjetunion verhandeln und einen Waffenstillstand vorschlagen. Die Lage beruhigt sich, aber Verbündete fühlen sich übergangen.','Die Alarmbereitschaft weiter erhöhen und Truppen verlegen. Entschlossen, aber ein Missverständnis könnte einen Atomkrieg auslösen.'],
+['Beagle-Konflikt 1978','Argentinien und Chile streiten um drei kleine Inseln im Süden. Ein Schiedsgericht hat sie Chile zugesprochen, Argentinien erkennt das nicht an und bringt Truppen in Stellung. Ihr beratet Argentinien.','Einen Vermittler wie den Papst einladen und neu verhandeln. Kein Krieg, aber die Inseln gehen vielleicht verloren.','Die Inseln besetzen und Truppen schicken. Der Anspruch wird durchgesetzt, aber ein Krieg mit Chile droht.'],
+['Taiwanstraße 1996','China übt mit Raketen in den Gewässern direkt vor Taiwan, kurz vor einer Wahl dort. Die USA überlegen, wie sie reagieren. Ihr beratet die USA.','Gespräche mit China anbieten und die Flotte nur in Bereitschaft halten. Ruhe bleibt, aber es wirkt vielleicht schwach.','Zwei Flugzeugträger in die Meerenge schicken. Ein starkes Signal, aber ein Zwischenfall könnte Krieg auslösen.'],
+['Kargil 1999','Indien und Pakistan, beide mit Atomwaffen, kämpfen in den Bergen von Kaschmir. Indien will besetzte Höhen zurückerobern. Ihr beratet Indien.','Die Kämpfe auf das eigene Gebiet begrenzen und die Grenze nicht überschreiten. Der Krieg bleibt klein, aber die Rückeroberung dauert länger.','Die Armee über die Grenze nach Pakistan schicken. Schneller Druck, aber ein Atomkrieg wird möglich.'],
+['Indien und Pakistan 2001','Nach einem Anschlag auf das indische Parlament macht Indien Pakistan verantwortlich. Beide Länder bringen Hunderttausende Soldaten an die Grenze. Ihr beratet Indien.','Diplomatischen Druck aufbauen, Botschafter abziehen und die Truppen halten. Kein Schuss, aber die Wut im Land wächst.','Einen Vergeltungsschlag auf Stellungen in Pakistan starten. Zeigt Stärke, aber Pakistan würde zurückschlagen.'],
+['Südchinesisches Meer','Mehrere Länder streiten um Inseln und Fischgründe. Ein Land baut auf einem Riff eine Insel mit Landebahn, ein anderes schickt seine Küstenwache hin. Ihr beratet das zweite Land.','Die Küstenwache zurückziehen und vor Gericht oder in Verhandlungen klagen. Sicher, aber die Insel bleibt gebaut.','Schiffe schicken, die den Bau blockieren. Stärke, aber ein Zusammenstoß ist möglich.'],
+['Mauerbau 1961','Die DDR riegelt Ost-Berlin mit Stacheldraht und Soldaten ab und teilt die Stadt. Kurz danach stehen sich Panzer aus Ost und West an einem Grenzübergang gegenüber. Ihr beratet die Westmächte.','Protestieren, aber die Sektorengrenze akzeptieren. Kein Krieg, aber die Teilung wird dauerhaft.','Die Absperrungen gewaltsam öffnen. Entschlossen, aber ein Schuss kann einen Krieg zwischen den Großmächten auslösen.'],
+['Prager Frühling 1968','Die Tschechoslowakei will einen freieren Sozialismus. Die Sowjetunion und ihre Verbündeten drohen mit Truppen. Ihr beratet die Regierung in Prag.','Verhandeln und das Tempo der Reformen drosseln. Ein Einmarsch wird unwahrscheinlicher, aber die Freiheiten werden kleiner.','Die Reformen unverändert fortsetzen und die Armee in Bereitschaft versetzen. Stolz, aber ein Einmarsch wird wahrscheinlicher.'],
+['Dorschkrieg (Island)','Island weitet seine Fischereigrenze aus. Britische Fischer fahren trotzdem in das Gebiet, und isländische Küstenwachschiffe schneiden ihre Netze durch. Ihr beratet Großbritannien.','Die Fischer zurückholen und ein Abkommen über Fangquoten aushandeln. Kein Konflikt, aber die Fischer verlieren Fanggebiete.','Kriegsschiffe zum Schutz der Fischer schicken. Die Fischer sind sicher, aber Zusammenstöße mit isländischen Booten drohen.'],
+['Mekong-Staudämme','Ein Land am Oberlauf des Mekong baut große Staudämme. Länder flussabwärts bekommen weniger Wasser für Reisfelder und Fische und drohen mit Gegenmaßnahmen. Ihr beratet das Land am Oberlauf.','Die Wassermenge mit den Ländern flussabwärts abstimmen und Daten teilen. Frieden, aber weniger Strom.','Die Dämme nach eigenem Bedarf betreiben. Mehr Strom, aber die Nachbarn fühlen sich bedroht.'],
+['Arktis','Das Eis in der Arktis schmilzt, neue Seewege und Rohstoffe werden frei. Mehrere Länder erheben Anspruch auf dieselben Meeresgebiete und schicken Schiffe. Ihr beratet eines davon.','Ein gemeinsames Abkommen über Seewege und Rohstoffe verhandeln. Sicher, aber man teilt den Gewinn.','Den Anspruch mit Marineschiffen sichern. Mehr Kontrolle, aber ein Wettrüsten beginnt.']];
+const PA='BBAABABBBABB'+'AAAAAAAAAAAA';CARDS.forEach((c,i)=>{if(PA[i]=='B'){const t=c[2];c[2]=c[3];c[3]=t}}); // [2]=friedlicher Weg, [3]=Eskalation
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,rej:0,lv:null,opts:[],notes:{},k4:false,back:null,nv:{},deck:[],win:null,why:''};for(const p of Object.values(P)){p.role=null;p.dead=false;p.conv=false}};
+const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,rej:0,lv:null,opts:[],notes:{},k4:false,back:null,nv:{},deck:[],win:null,why:'',last:null};for(const p of Object.values(P)){p.role=null;p.dead=false;p.conv=false}};
 reset();
 const log=m=>G.log.push(m),nm=i=>P[i].name,al=()=>G.order.filter(i=>!P[i].dead),RN={D:'Diplomat',A:'Analyst',S:'Saboteur',T:'Tyrann'};
+const addH=(t,e)=>{G.hist.push({t,e});EV++;G.last={t,e}};
 const win=(w,why)=>{G.ph='over';G.win=w;G.why=why;log(why)};
 function round(){
   if(!G.deck.length)G.deck=shuf(CARDS.map((_,i)=>i));
@@ -30,7 +44,7 @@ function start(){
   const roles=shuf(['T',...Array(s-1).fill('S'),'A',...Array(n-s-1).fill('D')]);
   G.order.forEach((i,k)=>{P[i].role=roles[k];G.notes[i]=[]});
   G.deck=shuf(CARDS.map((_,i)=>i));G.idx=Math.random()*n|0;
-  log('Spiel gestartet. Vorsitz: '+nm(G.order[G.idx]));round();
+  log('Spiel gestartet. Vorstandschef: '+nm(G.order[G.idx]));round();
 }
 function endDip(){
   if(al().some(i=>P[i].role=='A')){G.ph='guess';G.nv={};log('8 Krisen gelöst! Die Saboteure haben eine letzte Chance: Sie dürfen den Analysten erraten.')}
@@ -38,7 +52,7 @@ function endDip(){
 }
 function resolve(){
   const ne=Object.values(G.votes).filter(c=>c=='E').length,esc=ne>=NEED;
-  G.res={ne,np:3-ne,esc};esc?G.esc++:G.sol++;G.hist.push({t:CARDS[G.card][0],e:esc});
+  G.res={ne,np:3-ne,esc};esc?G.esc++:G.sol++;addH(CARDS[G.card][0],esc);
   log(CARDS[G.card][0]+': '+(esc?'eskaliert ('+ne+' Eskalationsstimme'+(ne>1?'n':'')+')':'gelöst'));
   if(G.sol>=8)endDip();
   else if(esc){if(!esc1('result'))G.ph='result'}
@@ -48,13 +62,13 @@ function nextChair(){do{G.idx=(G.idx+1)%G.order.length}while(P[G.order[G.idx]].d
 function ttally(){
   const v=Object.entries(G.votes),y=v.filter(e=>e[1]).length,ok=y*2>v.length;
   G.lv=v.map(([i,b])=>[nm(i),b]);
-  log('Teamwahl: '+y+' Ja / '+(v.length-y)+' Nein – '+(ok?'angenommen':'abgelehnt'));
+  log('Vorstandswahl: '+y+' Ja / '+(v.length-y)+' Nein – '+(ok?'angenommen':'abgelehnt'));
   G.votes={};
   if(ok){G.rej=0;G.ph='vote';return}
   G.rej++;
   if(G.rej>=3){
-    G.rej=0;G.esc++;G.hist.push({t:CARDS[G.card][0]+' (kein Team)',e:true});
-    G.res={forced:true,esc:true};log('Dreimal kein Team – die Krise eskaliert von selbst');
+    G.rej=0;G.esc++;addH(CARDS[G.card][0]+' (keine Koalition)',true);
+    G.res={forced:true,esc:true};log('Dreimal keine Vorstandskoalition – die Saboteure bekommen einen Punkt');
     if(!esc1('result'))G.ph='result';
   }else{nextChair();G.team=[];G.ph='team'}
 }
@@ -67,7 +81,7 @@ function gtally(){
 }
 function esc1(back){
   if(G.esc>=8){win('S','8 Eskalationen – die Saboteure gewinnen!');return true}
-  if(G.esc==4&&!G.k4){G.k4=true;G.back=back;G.ph='kill';log('Stufe 4: Der Vorsitz darf einen Spieler töten');return true}
+  if(G.esc==5&&!G.k4){G.k4=true;G.back=back;G.ph='kill';log('Stufe 5: Direkte Hinrichtung – der Vorstandschef darf einen Spieler hinrichten');return true}
   return false;
 }
 function convert(){
@@ -89,7 +103,7 @@ function atally(){
   if(G.vq=='hold'){if(ok){G.ph='apick';log('Anklage genehmigt')}else{G.acc=false;G.ph='team';log('Anklage abgelehnt')}return}
   if(!ok){G.ph='team';log('Die Mehrheit klagt '+nm(G.asp)+' nicht an');return}
   if(P[G.asp].role=='T')return win('D',nm(G.asp)+' war der Tyrann – die Diplomaten gewinnen!');
-  G.esc++;G.hist.push({t:'Falsche Anklage',e:true});log(nm(G.asp)+' war nicht der Tyrann – Saboteure +1');
+  G.esc++;addH('Falsche Anklage',true);log(nm(G.asp)+' war nicht der Tyrann – Saboteure +1');
   if(esc1('team'))return;
   G.ph='team';
 }
@@ -102,8 +116,8 @@ function act(p,a){
     case 'team':{
       if(ph!='team'||id!=G.pres||!Array.isArray(x)||x.length!=2||new Set(x).size!=2||!x.every(i=>i!=id&&G.order.includes(i)&&!P[i].dead))return bad;
       G.team=[id,...x];G.votes={};G.ph='tvote';
-      log(nm(id)+' schlägt das Team vor: '+G.team.map(nm).join(', '));break}
-    case 'tv':if(ph!='tvote'||P[id].dead||id in G.votes)return bad;G.votes[id]=!!x;if(Object.keys(G.votes).length==al().length)ttally();break;
+      log(nm(id)+' schlägt den Vorstand vor: '+G.team.map(nm).join(', '));break}
+    case 'tv':if(ph!='tvote'||P[id].dead||G.team.includes(id)||id in G.votes)return bad;G.votes[id]=!!x;if(Object.keys(G.votes).length==al().filter(i=>!G.team.includes(i)).length)ttally();break;
     case 'cv':
       if(ph!='vote'||!G.team.includes(id)||id in G.votes||(x!='P'&&x!='E'))return bad;
       if(x=='E'&&(P[id].role=='D'||P[id].role=='A'))return 'Als Diplomat musst du friedlich wählen';
@@ -115,8 +129,8 @@ function act(p,a){
     case 'ki':{
       const t=P[x];
       if(ph!='kill'||id!=G.pres||!t||t.dead||x==id)return bad;
-      t.dead=true;log(nm(x)+' wurde getötet und war: '+RN[t.role]);
-      if(t.role=='T')win('D','Der Tyrann wurde getötet – die Diplomaten gewinnen!');
+      t.dead=true;log(nm(x)+' wurde hingerichtet und war: '+RN[t.role]);
+      if(t.role=='T')win('D','Der Tyrann wurde hingerichtet – die Diplomaten gewinnen!');
       else if(t.role=='S'){G.ph='night';G.nv={};log('Die Nacht bricht an …')}
       else G.ph=G.back;
       break}
@@ -139,10 +153,10 @@ function act(p,a){
 }
 function view(id){
   const me=P[id],ph=G.ph,over=ph=='over',c=G.card!=null&&ph!='lobby'?CARDS[G.card]:null;
-  return{ph,sol:G.sol,esc:G.esc,hist:G.hist,me:{id,name:me.name,role:me.role,alive:!me.dead,host:G.order[0]==id},
+  return{ph,sol:G.sol,esc:G.esc,hist:G.hist,ev:EV,last:G.last,me:{id,name:me.name,role:me.role,alive:!me.dead,host:G.order[0]==id},
     pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
       role:(over||q.dead||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T'))||(me.role=='A'&&q.role=='S'&&!q.conv))?q.role:null}}),
-    pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,voted:Object.keys((ph=='night'||ph=='guess')?G.nv:G.votes),res:G.res,rej:G.rej,lv:G.lv,
+    pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,voted:Object.keys((ph=='night'||ph=='guess')?G.nv:G.votes),res:G.res,rej:G.rej,vn:al().filter(i=>!G.team.includes(i)).length,lv:G.lv,
     priv:G.notes[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,win:G.win,why:G.why,log:G.log.slice(-40).reverse()};
 }
 // TESTMODUS-BEGIN
@@ -150,7 +164,7 @@ let bt=null;const sched=()=>{if(bt)return;bt=setTimeout(()=>{bt=null;if(botStep(
 function botStep(){
   const ph=G.ph,B=i=>i&&P[i]&&P[i].bot,pick=a=>a[Math.random()*a.length|0],go=(i,o)=>!act(P[i],o);
   if(ph=='team'&&B(G.pres))return go(G.pres,{t:'team',x:shuf(al().filter(i=>i!=G.pres)).slice(0,2)});
-  if(ph=='tvote'){const b=al().find(i=>B(i)&&!(i in G.votes));if(b)return go(b,{t:'tv',x:Math.random()<.7})}
+  if(ph=='tvote'){const b=al().find(i=>B(i)&&!G.team.includes(i)&&!(i in G.votes));if(b)return go(b,{t:'tv',x:Math.random()<.7})}
   if(ph=='vote'){const b=G.team.find(i=>B(i)&&!(i in G.votes));
     if(b){const r=P[b].role;return go(b,{t:'cv',x:((r=='S'||r=='T')&&Math.random()<.6)?'E':'P'})}}
   if(ph=='result'&&B(G.pres))return go(G.pres,{t:'next'});
