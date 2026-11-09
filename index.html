@@ -37,9 +37,26 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;background:linear-grad
 body.home::before{background:#12151c}
 .panel,.p,.card{background:rgba(20,24,34,.84)}.board span{background:rgba(35,39,51,.86)}
 .dead{opacity:.55;text-decoration:line-through}
-</style></head><body><div id="app"></div>
+#ov2{position:fixed;inset:0;background:#000d;display:flex;align-items:center;justify-content:center;z-index:20;padding:16px}
+.ovb2{width:100%;max-width:420px;text-align:center}
+.flip{width:160px;height:215px;margin:14px auto;perspective:800px;-webkit-perspective:800px}
+.flipin{width:100%;height:100%;position:relative;transform-style:preserve-3d;-webkit-transform-style:preserve-3d;animation:fl 1.5s ease-out forwards}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:19px;box-shadow:0 12px 30px #000a;border:3px solid #fff4;padding:8px}
+.back{background:#444;font-size:60px}.front{transform:rotateY(180deg)}.front.P{background:#2563eb}.front.E{background:#dc2626}
+.front small{display:block;font-size:12px;font-weight:400;margin-top:10px;color:#fff}
+@keyframes fl{0%{transform:rotateY(0) scale(.5)}45%{transform:rotateY(0) scale(1.15) translateY(-18px)}100%{transform:rotateY(180deg) scale(1)}}
+.sl.new{animation:pu 1s ease-in-out 3}@keyframes pu{50%{transform:scale(1.18);box-shadow:0 0 18px #fff}}
+#rb{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+#roleov{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 56px);max-width:480px;margin:0 auto;z-index:30;background:#0c0f16;border:1px solid #444;border-radius:14px;padding:8px 12px;pointer-events:none;box-shadow:0 10px 30px #000c}
+.hintbar{background:rgba(251,191,36,.96);color:#1a1a1a;border-radius:10px;padding:10px 12px;font-size:14px;margin:6px 0}
+.sl{position:relative}.sl u{position:absolute;top:1px;left:3px;font-size:10px;text-decoration:none}.sl[onclick]{cursor:pointer}
+.rules{background:rgba(20,24,34,.92);border-radius:12px;margin:14px 0}
+.rules summary{padding:14px;font-weight:600;cursor:pointer;list-style:none}.rules summary::-webkit-details-marker{display:none}
+.rules summary::after{content:'▾';float:right}.rules[open] summary::after{content:'▴'}
+.rules .rb{padding:0 14px 14px;font-size:14px;line-height:1.45}.rules h3{margin:14px 0 4px;font-size:15px;color:#fcd34d}.rules ul,.rules ol{margin:4px 0;padding-left:20px}.rules p{margin:4px 0}
+</style></head><body><div id="topbar" style="max-width:480px;margin:0 auto;padding-top:12px"></div><div id="app"></div>
 <script>
-let S=null,id=localStorage.kr_id,show=false,sel=[],info=false;
+let S=null,id=localStorage.kr_id,show=false,sel=[],info=false,ev=null;
 const $=document.getElementById('app');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const RC={D:['Diplomat','#2563eb'],A:['Analyst','#0891b2'],S:['Saboteur','#dc2626'],T:['Tyrann','#7f1d1d']};
@@ -57,31 +74,80 @@ async function join(){
 }
 function connect(){
   const es=new EventSource('/events?id='+id);
-  es.onmessage=e=>{S=JSON.parse(e.data);draw()};
+  es.onmessage=e=>{S=JSON.parse(e.data);if(ev!==null&&S.ev!==ev&&S.last)showOv(S.last);ev=S.ev;draw()};
   es.onerror=()=>{if(es.readyState==2){localStorage.removeItem('kr_id');id=null;S=null;draw()}};
 }
+const HINTS={
+acc:'<b>⚖️ Stufe 3 – Anklage:</b> Ab 3 Eskalationen darf einmal pro Spiel jemand eine Anklage beantragen (vor der Vorstandswahl). Stimmt mehr als die Hälfte zu, nennt er einen Verdächtigen als Tyrannen, und alle stimmen ab. Ist es der Tyrann, gewinnen die Diplomaten sofort. Wenn nicht, bekommen die Saboteure eine Eskalation.',
+kill:'<b>⚔️ Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Mit der 5. Eskalation darf der Vorstandschef (der Vorsitzende der Runde) sofort einen Spieler hinrichten. Dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es ein Saboteur, dürfen die Saboteure in der Nacht einen Diplomaten umdrehen.',
+lose:'<b>☠️ Stufe 8:</b> Mit der 8. Eskalation gewinnen die Saboteure.',
+win:'<b>🏆 Stufe 8:</b> Mit 8 gelösten Krisen gewinnen die Diplomaten – aber die Saboteure dürfen dann noch den Analysten erraten.'};
+let hintTxt=null,ht=null;
+function hint(k){hintTxt=HINTS[k];clearTimeout(ht);ht=setTimeout(()=>{hintTxt=null;draw()},8000);draw()}
+function boardH(hl){
+  const row=(e,ic,cl,N,em,hk)=>{const l=S.hist.filter(x=>x.e==e);let r='';for(let i=0;i<N;i++){const f=l[i];r+='<div class="sl'+(f?' '+cl:'')+(hl===e&&i==l.length-1?' new':'')+'"'+(hk[i]?' onclick="hint(\''+hk[i]+'\')"':'')+'>'+(f?(em[i]?'<u>'+em[i]+'</u>':'')+ic+'<i>'+esc(f.t.split(' ')[0])+'</i>':(em[i]||''))+'</div>'}return r};
+  return '<div class="bd"><div class="bl">'+row(false,'🕊️','P',8,{7:'🏆'},{7:'win'})+'</div><div class="bf">'+row(true,'🔥','E',8,{2:'⚖️',4:'💀',7:'☠️'},{2:'acc',4:'kill',7:'lose'})+'</div></div>';
+}
+function showOv(l){
+  const o=document.getElementById('ov2');if(o)o.remove();
+  const d=document.createElement('div');d.id='ov2';
+  d.innerHTML='<div class="ovb2"><h2>'+(l.e?'🔥 Die Krise eskaliert':'🕊️ Die Krise ist gelöst')+'</h2><div class="flip"><div class="flipin"><div class="face back">?</div><div class="face front '+(l.e?'E':'P')+'">'+(l.e?'🔥<br>ESKALATION':'🕊️<br>FRIEDEN')+'<small>'+esc(l.t)+'</small></div></div></div>'+boardH(l.e)+'<small>Tippen zum Schließen</small></div>';
+  d.onclick=()=>d.remove();document.body.appendChild(d);setTimeout(()=>d.remove(),5000);
+}
+const HINTR={D:'Wähle im Vorstand immer den friedlichen Weg und finde die Saboteure.',A:'Du kennst die Saboteure (nicht den Tyrannen). Lenke die Diplomaten, aber verrate dich nicht – am Ende dürfen die Saboteure dich erraten.',S:'Eskaliere heimlich im Vorstand, ohne aufzufliegen. Schütze den Tyrannen.',T:'Du führst die Saboteure an. Sie kennen dich, du kennst sie nicht. Fall nicht auf!'};
+function roleH(){
+  const m=S.me,L=S.pl;
+  let h='<div class="role" style="background:'+RC[m.role][1]+'">'+RC[m.role][0]+'</div><div class="panel"><small>'+HINTR[m.role]+'</small></div>';
+  if(m.role=='S')h+='<div class="panel">Deine Leute: <b>'+L.filter(p=>(p.role=='S'||p.role=='T')&&p.id!=m.id).map(p=>esc(p.name)+(p.role=='T'?' (Tyrann)':'')).join(', ')+'</b></div>';
+  if(m.role=='A')h+='<div class="panel">Die Saboteure (ohne Tyrann): <b>'+L.filter(p=>p.role=='S'&&p.id!=m.id).map(p=>esc(p.name)).join(', ')+'</b></div>';
+  if(S.priv.length)h+='<div class="panel priv">'+S.priv.map(esc).join('<br>')+'</div>';
+  return h;
+}
+let rt=null,rd=0;
+function roleOpen(){if(!S||!S.me.role)return;rd=Date.now();clearTimeout(rt);let o=document.getElementById('roleov');if(!o){o=document.createElement('div');o.id='roleov';document.body.appendChild(o)}o.innerHTML=roleH()}
+function roleClose(){clearTimeout(rt);const o=document.getElementById('roleov');if(o)o.remove()}
+function roleUp(){if(!document.getElementById('roleov'))return;clearTimeout(rt);if(Date.now()-rd>500)roleClose();else rt=setTimeout(roleClose,3000)}
+function setTop(html){const t=document.getElementById('topbar');if(t._h!==html){t.innerHTML=html;t._h=html}}
+const RULES=`<h3>Worum geht es?</h3>
+<p>Diplomaten wollen historische Krisen friedlich lösen. Heimliche Saboteure wollen, dass sie eskalieren. Gespielt wird zusammen am Tisch: Jeder hat sein Handy, geredet, verdächtigt und geblufft wird laut.</p>
+<h3>Die Rollen (5 bis 10 Spieler)</h3>
+<ul><li><b>Diplomat:</b> wählt immer den friedlichen Weg und sucht die Saboteure.</li>
+<li><b>Analyst</b> (ein Diplomat): kennt die Saboteure, aber nicht den Tyrannen. Er muss die anderen lenken, ohne sich zu verraten.</li>
+<li><b>Saboteure:</b> kennen einander und den Tyrannen und eskalieren heimlich.</li>
+<li><b>Tyrann:</b> der geheime Anführer der Saboteure. Er kennt die anderen nicht.</li></ul>
+<p>Saboteure inklusive Tyrann: bei 5–6 Spielern 2, bei 7–8 Spielern 3, bei 9–10 Spielern 4. Deine Rolle siehst du über „Rolle &amp; Infos“: Kurz tippen zeigt sie 3 Sekunden, gedrückt halten zeigt sie, solange du hältst.</p>
+<h3>Eine Runde</h3>
+<ol><li><b>Krise:</b> Alle sehen eine historische Krise mit zwei Reaktionen: dem friedlichen Weg und dem Eskalationsrisiko.</li>
+<li><b>Vorstand:</b> Der Vorstandschef (reihum) wählt 2 Mitglieder. Er selbst sitzt automatisch im Vorstand, sich selbst kann er nicht wählen.</li>
+<li><b>Vorstandswahl:</b> Alle anderen Spieler stimmen offen mit Ja oder Nein ab. Die Vorstandsmitglieder stimmen nicht mit. Die Mehrheit entscheidet. Redet vorher laut darüber, wem ihr vertraut!</li>
+<li><b>Abgelehnt?</b> Dann wird der nächste Spieler Vorstandschef, die Krise bleibt dieselbe. Kommt dreimal in Folge keine Vorstandskoalition zustande, bekommen die Saboteure einen Punkt (eine Eskalation).</li>
+<li><b>Geheime Wahl:</b> Jedes Vorstandsmitglied wählt heimlich „Friedlich“ oder „Eskalieren“. Diplomaten müssen friedlich wählen, Saboteure dürfen eskalieren.</li>
+<li><b>Ergebnis:</b> Schon eine Eskalationsstimme lässt die Krise eskalieren. Alle sehen, wie viele Eskalationsstimmen es gab, aber nicht von wem. Dann wird diskutiert, wer es war.</li></ol>
+<h3>Spielbrett und Sonderplätze</h3>
+<p>Oben stehen zwei Leisten mit je 8 Plätzen: 🕊️ gelöste Krisen und 🔥 Eskalationen. Tippe auf einen Sonderplatz, um eine Erklärung zu sehen.</p>
+<ul><li>⚖️ <b>Stufe 3 – Anklage:</b> Einmal pro Spiel darf jemand vor der Vorstandswahl eine Anklage beantragen. Stimmt die Mehrheit zu, nennt er einen Verdächtigen als Tyrannen, und alle stimmen ab. Trifft es den Tyrannen, gewinnen die Diplomaten sofort, sonst bekommen die Saboteure eine Eskalation.</li>
+<li>💀 <b>Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Der Vorstandschef darf einen Spieler hinrichten, dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es ein Saboteur, dürfen die Saboteure in der Nacht einen Diplomaten umdrehen.</li></ul>
+<h3>Wer gewinnt?</h3>
+<ul><li><b>Diplomaten:</b> 8 gelöste Krisen, oder der Tyrann wird angeklagt oder hingerichtet. Haben sie 8 Krisen gelöst, dürfen die Saboteure noch einmal raten, wer der Analyst ist. Treffen sie, gewinnen sie doch noch.</li>
+<li><b>Saboteure:</b> 8 Eskalationen.</li></ul>
+<h3>So geht es los</h3>
+<p>Namen eingeben und beitreten. Der erste Spieler in der Lobby ist Host und startet das Spiel (mindestens 5 Spieler). Der Host kann in der Lobby Spieler entfernen und das Spiel jederzeit neu starten.</p>`;
 function draw(){document.body.classList.toggle('home',!S);
-  if(!S){$.innerHTML='<img src="/bg.jpg" alt="" style="width:100%;display:block;border-radius:14px;margin:8px 0 4px;box-shadow:0 6px 24px #000a"><h1>Diplomaten gegen Saboteure</h1><input id="n" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="go" onclick="join()">Beitreten</button>';return}
+  setTop(S?`<div class="top"><b>${esc(S.me.name)}</b><span>${S.me.role?`<button class="sm" id="rb" oncontextmenu="return false" ontouchstart="event.preventDefault();roleOpen()" ontouchend="roleUp()" ontouchcancel="roleUp()" onmousedown="roleOpen()" onmouseup="roleUp()" onmouseleave="roleUp()">Rolle &amp; Infos</button> `:''}<button class="sm" onclick="info=true;draw()">ℹ️ Verlauf</button></span></div>`:'');
+  const ro=document.getElementById('roleov');if(ro&&S&&S.me.role)ro.innerHTML=roleH();
+  if(!S){$.innerHTML='<img src="/bg.jpg" alt="" style="width:100%;display:block;border-radius:14px;margin:8px 0 4px;box-shadow:0 6px 24px #000a"><h1>Diplomaten gegen Saboteure</h1><input id="n" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="go" onclick="join()">Beitreten</button><details class="rules"><summary>📖 Spielregeln &amp; Anleitung</summary><div class="rb">'+RULES+'</div></details>';return}
   const m=S.me,L=S.pl,ph=S.ph,n=L.length,nm=i=>(L.find(p=>p.id==i)||{}).name||'?',pres=esc(nm(S.pres));
   const inTeam=S.team.includes(m.id),voted=S.voted.includes(m.id);
   if(ph!='team')sel=[];
-  let h='<div class="top"><b>'+esc(m.name)+'</b>'+'<span>'+(m.role?'<button class="sm" onclick="show=!show;draw()">'+(show?'Verbergen':'Rolle & Infos')+'</button> ':'')+'<button class="sm" onclick="info=true;draw()">ℹ️ Verlauf</button></span></div>';
-  if(m.role&&show){
-    h+='<div class="role" style="background:'+RC[m.role][1]+'">'+RC[m.role][0]+'</div>';
-    h+='<div class="panel"><small>'+({D:'Wähle im Krisenteam immer den friedlichen Weg und finde die Saboteure.',A:'Du kennst die Saboteure (nicht den Tyrannen). Lenke die Diplomaten, aber verrate dich nicht – am Ende dürfen die Saboteure dich erraten.',S:'Eskaliere heimlich im Team, ohne aufzufliegen. Schütze den Tyrannen.',T:'Du führst die Saboteure an. Sie kennen dich, du kennst sie nicht. Fall nicht auf!'})[m.role]+'</small></div>';
-    if(m.role=='S')h+='<div class="panel">Deine Leute: <b>'+L.filter(p=>(p.role=='S'||p.role=='T')&&p.id!=m.id).map(p=>esc(p.name)+(p.role=='T'?' (Tyrann)':'')).join(', ')+'</b></div>';
-    if(m.role=='A')h+='<div class="panel">Die Saboteure (ohne Tyrann): <b>'+L.filter(p=>p.role=='S'&&p.id!=m.id).map(p=>esc(p.name)).join(', ')+'</b></div>';
-    if(S.priv.length)h+='<div class="panel priv">'+S.priv.map(esc).join('<br>')+'</div>';
-  }
+  let h='';
   const ns=[0,0,0,0,0,2,2,3,3,4,4][n]||0;
-  const row=(e,ic,cl,N,em)=>{const l=S.hist.filter(x=>x.e==e);let r='';for(let i=0;i<N;i++)r+='<div class="sl'+(l[i]?' '+cl:'')+'">'+(l[i]?ic+'<i>'+esc(l[i].t.split(' ')[0])+'</i>':(em[i]||''))+'</div>';return r};
-  h+='<div class="bd"><div class="bl">'+row(false,'🕊️','P',8,{7:'🏆'})+'</div><div class="bf">'+row(true,'🔥','E',8,{2:'⚖️',3:'💀',7:'☠️'})+'</div></div>';
+  h+=boardH(null)+(hintTxt?'<div class="hintbar" onclick="hintTxt=null;draw()">'+hintTxt+'<br><small style="color:#444">Tippen zum Schließen</small></div>':'');
   h+='<div class="board"><span>🕊️ noch '+(8-S.sol)+' bis Frieden</span><span>🔥 noch '+(8-S.esc)+' bis Eskalation</span></div>';
   if(n>=5)h+='<div class="board"><span>😈 Zu Beginn: '+ns+' Saboteure (inkl. Tyrann)</span><span>🕊️ '+(n-ns)+' Diplomaten</span></div>';
   h+=L.map(p=>'<div class="p'+(p.dead?' dead':'')+'"><span>'+(p.dead?'💀 ':'')+esc(p.name)+(p.bot?' 🤖':'')+(p.id==S.pres&&ph!='lobby'?' 🎩':'')+(S.team.includes(p.id)?' 👥':'')+(p.on?'':' ⚠️')+((p.role&&(ph=='over'||p.dead))?' <small>['+RC[p.role][0]+']</small>':'')+'</span>'+((m.host&&ph=='lobby'&&p.id!=m.id)?'<button class="kb" onclick="act(\'kick\',\''+p.id+'\')">✕</button>':'')+'</div>').join('');
   let s='',c=S.card;
   const cardH=c?'<div class="card"><b>'+esc(c.t)+'</b><p>'+esc(c.s)+'</p>'+c.o.map(o=>'<div class="opt"><b>'+(o.k=='P'?'🕊️ Friedlicher Weg:':'🔥 Eskalationsrisiko:')+'</b> '+esc(o.x)+'</div>').join('')+'</div>':'';
-  const lvH=S.lv?'<small>Letzte Teamwahl: '+S.lv.map(x=>esc(x[0])+(x[1]?' ✅':' ❌')).join(', ')+'</small>':'';
+  const lvH=S.lv?'<small>Letzte Vorstandswahl: '+S.lv.map(x=>esc(x[0])+(x[1]?' ✅':' ❌')).join(', ')+'</small>':'';
   const yn=(t)=>!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+' abgestimmt</p>':'<div class="row"><button class="ja" onclick="act(\''+t+'\',true)">JA</button><button class="nein" onclick="act(\''+t+'\',false)">NEIN</button></div>';
   if(ph=='lobby'){
     s='<p>'+n+'/10 Spieler (mind. 5)</p>'+(m.host?'<button class="go" onclick="act(\'start\')">Spiel starten</button>':'<p>Warte auf den Host…</p>');
@@ -89,17 +155,17 @@ function draw(){document.body.classList.toggle('home',!S);
     if(m.host)s+='<p><small>Testmodus:</small></p><div class="row"><button onclick="act(\'bot\')">+ Bot</button><button onclick="act(\'fill\')">Auf 7 füllen</button></div>';
     // TESTMODUS-END
   }else if(ph=='team'){
-    s=cardH+(S.rej?'<p>'+lvH+'<br><small>Abgelehnte Teams: '+S.rej+'/3 – bei 3 eskaliert die Krise.</small></p>':'')+(m.id==S.pres?'<p>Du bist Vorsitz und automatisch im Team. Wähle 2 weitere Mitglieder ('+sel.length+'/2):</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="'+(sel.includes(p.id)?'on':'')+'" onclick="tg(\''+p.id+'\')">'+esc(p.name)+'</button>').join('')+'<button class="go" '+(sel.length==2?'':'disabled')+' onclick="act(\'team\',sel)">Team bestätigen</button>':'<p>'+pres+' stellt das Krisenteam zusammen…</p>')+((S.acc||!m.alive)?'':S.esc<3?'<small>⚖️ Anklage möglich ab 3 Eskalationen</small>':'<button onclick="act(\'acc\')">⚖️ Anklage beantragen (1× pro Spiel)</button>');
+    s=cardH+(S.rej?'<p>'+lvH+'<br><small>Abgelehnte Vorstände: '+S.rej+'/3 – bei 3 bekommen die Saboteure einen Punkt.</small></p>':'')+(m.id==S.pres?'<p>Du bist Vorstandschef und automatisch im Vorstand. Wähle 2 weitere Mitglieder ('+sel.length+'/2):</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="'+(sel.includes(p.id)?'on':'')+'" onclick="tg(\''+p.id+'\')">'+esc(p.name)+'</button>').join('')+'<button class="go" '+(sel.length==2?'':'disabled')+' onclick="act(\'team\',sel)">Vorstand bestätigen</button>':'<p>Vorstandschef '+pres+' stellt den Vorstand zusammen…</p>')+((S.acc||!m.alive)?'':S.esc<3?'<small>⚖️ Anklage möglich ab 3 Eskalationen</small>':'<button onclick="act(\'acc\')">⚖️ Anklage beantragen (1× pro Spiel)</button>');
   }else if(ph=='tvote'){
-    s=cardH+'<p>Vorsitz <b>'+pres+'</b> schlägt vor: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p><p><small>Redet offen: Vertraut ihr diesem Team?</small></p>'+yn('tv');
+    s=cardH+'<p>Vorstandschef <b>'+pres+'</b> schlägt den Vorstand vor: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p>'+(inTeam?'<p>Du sitzt in diesem Vorstand und stimmst nicht mit ab. Die anderen entscheiden offen ('+S.voted.length+'/'+S.vn+').</p>':!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+S.vn+' abgestimmt</p>':'<p><small>Redet offen: Vertraut ihr diesem Vorstand? Die Mehrheit entscheidet.</small></p><div class="row"><button class="ja" onclick="act(\'tv\',true)">JA</button><button class="nein" onclick="act(\'tv\',false)">NEIN</button></div>');
   }else if(ph=='vote'){
-    s=cardH+'<p>Team: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p>'+lvH+(inTeam&&!voted?'<p>Heimliche Wahl:</p><div class="row"><button class="go" onclick="act(\'cv\',\'P\')">🕊️ Friedlich</button><button class="nein" onclick="act(\'cv\',\'E\')">🔥 Eskalieren</button></div>':'<p>Das Team wählt heimlich… '+S.voted.length+'/3</p>');
+    s=cardH+'<p>Vorstand: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p>'+lvH+(inTeam&&!voted?'<p>Heimliche Wahl:</p><div class="row"><button class="go" onclick="act(\'cv\',\'P\')">🕊️ Friedlich</button><button class="nein" onclick="act(\'cv\',\'E\')">🔥 Eskalieren</button></div>':'<p>Der Vorstand wählt heimlich… '+S.voted.length+'/3</p>');
   }else if(ph=='result'||(ph=='over'&&S.res)){
-    s=(S.res?'<h2>'+(S.res.esc?'🔥 Eskaliert':'🕊️ Gelöst')+'</h2><p>'+(S.res.forced?'Dreimal kein Team – die Krise eskaliert von selbst.':S.res.ne+'× Eskalation, '+S.res.np+'× friedlich (nicht sichtbar, von wem)')+'</p>':'')+((ph=='result'&&m.id==S.pres)?'<button class="go" onclick="act(\'next\')">Nächste Runde</button>':ph=='result'?'<p>Warte auf '+pres+'…</p>':'');
+    s=(S.res?'<h2>'+(S.res.esc?'🔥 Eskaliert':'🕊️ Gelöst')+'</h2><p>'+(S.res.forced?'Dreimal keine Vorstandskoalition – die Saboteure bekommen einen Punkt.':S.res.ne+'× Eskalation, '+S.res.np+'× friedlich (nicht sichtbar, von wem)')+'</p>':'')+((ph=='result'&&m.id==S.pres)?'<button class="go" onclick="act(\'next\')">Nächste Runde</button>':ph=='result'?'<p>Warte auf '+pres+'…</p>':'');
   }
   if(ph=='avote')s='<p>⚖️ '+(S.vq=='hold'?esc(nm(S.asker))+' beantragt eine Anklage. Durchführen?':'Anklage gegen <b>'+esc(nm(S.asp))+'</b>. Wirklich anklagen?')+'</p>'+yn('av');
   if(ph=='apick')s=m.id==S.asker?'<p>Wen klagst du als Tyrann an?</p>'+L.filter(p=>p.id!=m.id).map(p=>'<button onclick="act(\'ap\',\''+p.id+'\')">'+esc(p.name)+'</button>').join(''):'<p>'+esc(nm(S.asker))+' wählt einen Verdächtigen…</p>';
-  if(ph=='kill')s=m.id==S.pres?'<p>☠️ Stufe 4: Du darfst einen Spieler töten. Seine Rolle wird danach aufgedeckt.</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="nein" onclick="act(\'ki\',\''+p.id+'\')">'+esc(p.name)+'</button>').join(''):'<p>☠️ '+pres+' entscheidet über Leben und Tod…</p>';
+  if(ph=='kill')s=m.id==S.pres?'<p>⚔️ <b>Direkte Hinrichtung durch den Vorstandschef</b> (Stufe 5): Du darfst einen Spieler hinrichten. Seine Rolle wird danach aufgedeckt.</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="nein" onclick="act(\'ki\',\''+p.id+'\')">'+esc(p.name)+'</button>').join(''):'<p>⚔️ Der Vorstandschef '+pres+' entscheidet über eine Hinrichtung…</p>';
   if(ph=='night')s=!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>🌙 Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+'</p>':'<p>🌙 <b>Nacht.</b> Alle Handys zeigen dasselbe. Tippe einen Spieler an. <small>(Nur die Wahl der Saboteure zählt.)</small></p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'nv\',\''+p.id+'\')">'+esc(p.name)+'</button>').join('');
   if(ph=='guess')s=!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>🎯 Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+'</p>':'<p>🎯 <b>Letzte Chance der Saboteure.</b> Alle Handys zeigen dasselbe. Tippe, wer der Analyst sein könnte. <small>(Nur die Wahl der Saboteure zählt.)</small></p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'nv\',\''+p.id+'\')">'+esc(p.name)+'</button>').join('');
   if(ph=='over')s+='<h2>'+(S.win=='D'?'🕊️ Diplomaten gewinnen':'😈 Saboteure gewinnen')+'</h2><p>'+esc(S.why)+'</p>'+(m.host?'<button class="go" onclick="act(\'new\')">Neues Spiel (Lobby)</button>':'');
