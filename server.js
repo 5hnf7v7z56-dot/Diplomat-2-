@@ -139,7 +139,7 @@ function act(p,a){
 }
 function view(id){
   const me=P[id],ph=G.ph,over=ph=='over',c=G.card!=null&&ph!='lobby'?CARDS[G.card]:null;
-  return{ph,sol:G.sol,esc:G.esc,hist:G.hist,me:{id,name:me.name,role:me.role,host:G.order[0]==id},
+  return{ph,sol:G.sol,esc:G.esc,hist:G.hist,me:{id,name:me.name,role:me.role,alive:!me.dead,host:G.order[0]==id},
     pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
       role:(over||q.dead||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T'))||(me.role=='A'&&q.role=='S'&&!q.conv))?q.role:null}}),
     pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,voted:Object.keys((ph=='night'||ph=='guess')?G.nv:G.votes),res:G.res,rej:G.rej,lv:G.lv,
