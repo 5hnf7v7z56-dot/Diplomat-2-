@@ -35,7 +35,7 @@ function resolve(){
   const na=Object.values(G.votes).filter(c=>c=='A').length,ch=na>=2?'A':'B',esc=ch==G.bad;
   G.res={na,nb:3-na,ch,esc};esc?G.esc++:G.sol++;G.hist.push({t:CARDS[G.card][0],e:esc});
   log(CARDS[G.card][0]+': '+(esc?'eskaliert':'gelöst'));
-  if(G.sol>=5)win('D','5 Krisen gelöst – die Diplomaten gewinnen!');
+  if(G.sol>=8)win('D','8 Krisen gelöst – die Diplomaten gewinnen!');
   else if(esc){if(!esc1('result'))G.ph='result'}
   else G.ph='result';
 }

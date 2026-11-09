@@ -75,8 +75,8 @@ function draw(){document.body.classList.toggle('home',!S);
   }
   const ns=[0,0,0,0,0,2,2,3,3,4,4][n]||0;
   const row=(e,ic,cl,N,em)=>{const l=S.hist.filter(x=>x.e==e);let r='';for(let i=0;i<N;i++)r+='<div class="sl'+(l[i]?' '+cl:'')+'">'+(l[i]?ic+'<i>'+esc(l[i].t.split(' ')[0])+'</i>':(em[i]||''))+'</div>';return r};
-  h+='<div class="bd"><div class="bl">'+row(false,'🕊️','P',5,{4:'🏆'})+'</div><div class="bf">'+row(true,'🔥','E',8,{2:'⚖️',3:'💀',7:'☠️'})+'</div></div>';
-  h+='<div class="board"><span>🕊️ noch '+(5-S.sol)+' bis Frieden</span><span>🔥 noch '+(8-S.esc)+' bis Eskalation</span></div>';
+  h+='<div class="bd"><div class="bl">'+row(false,'🕊️','P',8,{7:'🏆'})+'</div><div class="bf">'+row(true,'🔥','E',8,{2:'⚖️',3:'💀',7:'☠️'})+'</div></div>';
+  h+='<div class="board"><span>🕊️ noch '+(8-S.sol)+' bis Frieden</span><span>🔥 noch '+(8-S.esc)+' bis Eskalation</span></div>';
   if(n>=5)h+='<div class="board"><span>😈 Zu Beginn: '+ns+' Saboteure (inkl. Tyrann)</span><span>🕊️ '+(n-ns)+' Diplomaten</span></div>';
   h+=L.map(p=>'<div class="p'+(p.dead?' dead':'')+'"><span>'+(p.dead?'💀 ':'')+esc(p.name)+(p.bot?' 🤖':'')+(p.id==S.pres&&ph!='lobby'?' 🎩':'')+(S.team.includes(p.id)?' 👥':'')+(p.on?'':' ⚠️')+((p.role&&(ph=='over'||p.dead))?' <small>['+RC[p.role][0]+']</small>':'')+'</span>'+((m.host&&ph=='lobby'&&p.id!=m.id)?'<button class="kb" onclick="act(\'kick\',\''+p.id+'\')">✕</button>':'')+'</div>').join('');
   let s='',c=S.card;
