@@ -1,4 +1,4 @@
-// Diplomaten gegen Saboteure – Prototyp. Start: node server.js
+// Diplomat – Prototyp. Start: node server.js
 const http=require('http'),fs=require('fs'),os=require('os'),cr=require('crypto');
 const PORT=process.env.PORT||3000,P={},NEED=1;let G,EV=0;
 const CARDS=[
@@ -28,10 +28,11 @@ const CARDS=[
 ['Mekong-Staudämme','Ein Land am Oberlauf des Mekong baut große Staudämme. Länder flussabwärts bekommen weniger Wasser für Reisfelder und Fische und drohen mit Gegenmaßnahmen. Ihr beratet das Land am Oberlauf.','Die Wassermenge mit den Ländern flussabwärts abstimmen und Daten teilen. Frieden, aber weniger Strom.','Die Dämme nach eigenem Bedarf betreiben. Mehr Strom, aber die Nachbarn fühlen sich bedroht.'],
 ['Arktis','Das Eis in der Arktis schmilzt, neue Seewege und Rohstoffe werden frei. Mehrere Länder erheben Anspruch auf dieselben Meeresgebiete und schicken Schiffe. Ihr beratet eines davon.','Ein gemeinsames Abkommen über Seewege und Rohstoffe verhandeln. Sicher, aber man teilt den Gewinn.','Den Anspruch mit Marineschiffen sichern. Mehr Kontrolle, aber ein Wettrüsten beginnt.']];
 const PA='BBAABABBBABB'+'AAAAAAAAAAAA';CARDS.forEach((c,i)=>{if(PA[i]=='B'){const t=c[2];c[2]=c[3];c[3]=t}}); // [2]=friedlicher Weg, [3]=Eskalation
+const freeAv=()=>{const t=new Set(Object.values(P).map(p=>p.av)),f=[...Array(12).keys()].filter(i=>!t.has(i));return f.length?f[Math.random()*f.length|0]:0};
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,rej:0,lv:null,opts:[],notes:{},k4:false,back:null,nv:{},deck:[],win:null,why:'',last:null};for(const p of Object.values(P)){p.role=null;p.dead=false;p.conv=false}};
 reset();
-const log=m=>G.log.push(m),nm=i=>P[i].name,al=()=>G.order.filter(i=>!P[i].dead),RN={D:'Diplomat',A:'Analyst',S:'Saboteur',T:'Tyrann'};
+const log=m=>G.log.push(m),nm=i=>P[i].name,al=()=>G.order.filter(i=>!P[i].dead),RN={D:'Diplomat',A:'Analyst',S:'Spion',T:'Tyrann'};
 const addH=(t,e)=>{G.hist.push({t,e});EV++;G.last={t,e}};
 const win=(w,why)=>{G.ph='over';G.win=w;G.why=why;log(why)};
 function round(){
@@ -47,7 +48,7 @@ function start(){
   log('Spiel gestartet. Vorstandschef: '+nm(G.order[G.idx]));round();
 }
 function endDip(){
-  if(al().some(i=>P[i].role=='A')){G.ph='guess';G.nv={};log('8 Krisen gelöst! Die Saboteure haben eine letzte Chance: Sie dürfen den Analysten erraten.')}
+  if(al().some(i=>P[i].role=='A')){G.ph='guess';G.nv={};log('8 Krisen gelöst! Die Spione haben eine letzte Chance: Sie dürfen den Analysten erraten.')}
   else win('D','8 Krisen gelöst – die Diplomaten gewinnen!');
 }
 function resolve(){
@@ -68,7 +69,7 @@ function ttally(){
   G.rej++;
   if(G.rej>=3){
     G.rej=0;G.esc++;addH(CARDS[G.card][0]+' (keine Koalition)',true);
-    G.res={forced:true,esc:true};log('Dreimal keine Vorstandskoalition – die Saboteure bekommen einen Punkt');
+    G.res={forced:true,esc:true};log('Dreimal keine Vorstandskoalition – die Spione bekommen einen Punkt');
     if(!esc1('result'))G.ph='result';
   }else{nextChair();G.team=[];G.ph='team'}
 }
@@ -76,34 +77,36 @@ function gtally(){
   const c={};
   for(const [i,t] of Object.entries(G.nv)){const a=P[i].role;if(a=='S'||a=='T')c[t]=(c[t]||0)+(a=='T'?1.5:1)}
   const e=Object.entries(c).sort((a,b)=>b[1]-a[1]),t=e.length?e[0][0]:null;
-  if(t&&P[t].role=='A')win('S',nm(t)+' war der Analyst – die Saboteure haben ihn enttarnt und gewinnen doch noch!');
+  if(t&&P[t].role=='A')win('S',nm(t)+' war der Analyst – die Spione haben ihn enttarnt und gewinnen doch noch!');
   else win('D',(t?nm(t)+' war nicht der Analyst – ':'')+'8 Krisen gelöst, die Diplomaten gewinnen!');
 }
 function esc1(back){
-  if(G.esc>=8){win('S','8 Eskalationen – die Saboteure gewinnen!');return true}
+  if(G.esc>=8){win('S','8 Eskalationen – die Spione gewinnen!');return true}
   if(G.esc==5&&!G.k4){G.k4=true;G.back=back;G.ph='kill';log('Stufe 5: Direkte Hinrichtung – der Vorstandschef darf einen Spieler hinrichten');return true}
   return false;
 }
-function convert(){
-  const c={};
-  for(const [i,t] of Object.entries(G.nv)){const a=P[i].role,b=P[t];
-    if((a=='S'||a=='T')&&b&&!b.dead&&b.role!='S'&&b.role!='T')c[t]=(c[t]||0)+(a=='T'?1.5:1)}
-  const e=Object.entries(c).sort((a,b)=>b[1]-a[1]);
-  if(e.length){
-    const t=e[0][0];P[t].role='S';P[t].conv=true;
-    for(const i of G.order){
-      if(i==t)G.notes[i].push('Du wurdest von den Saboteuren umgedreht – du bist jetzt Saboteur!');
-      else if(P[i].role=='S'||P[i].role=='T')G.notes[i].push(nm(t)+' ist jetzt einer von euch.');
-    }
-  }
-  log('Die Nacht ist vorbei.');G.nv={};G.ph=G.back;
+function offerStart(){
+  const c=al().filter(i=>P[i].role=='D');
+  if(!c.length){G.ph=G.back;return}
+  G.offer={to:c[Math.random()*c.length|0],st:'wait',n:(G.offer?G.offer.n:0)+1};
+  G.ph='offer';log('Ein Spion wurde hingerichtet. Eine geheime Nachricht wird zugestellt …');
+  const n=G.offer.n;setTimeout(()=>{if(G.ph=='offer'&&G.offer&&G.offer.n==n){offerEnd(false);bc()}},180000);
+}
+function offerEnd(yes){
+  const o=G.offer,t=o.to,nt=(i,m)=>G.notes[i]&&G.notes[i].push(m);
+  if(yes){
+    P[t].role='S';P[t].conv=true;
+    nt(t,'Du hast das Angebot angenommen und bist jetzt Spion. Deine Mitstreiter: '+G.order.filter(i=>i!=t&&!P[i].dead&&(P[i].role=='S'||P[i].role=='T')).map(nm).join(', ')+'.');
+    for(const i of G.order)if(i!=t&&(P[i].role=='S'||P[i].role=='T'))nt(i,nm(t)+' hat das Angebot angenommen und ist jetzt Spion.');
+  }else for(const i of G.order)if(P[i].role=='S'||P[i].role=='T')nt(i,'Das Angebot wurde abgelehnt. Es bleibt bei euch.');
+  log('Die Nachricht wurde zugestellt.');G.offer=null;G.ph=G.back;
 }
 function atally(){
   const y=Object.values(G.votes).filter(Boolean).length,ok=y*2>al().length;
   if(G.vq=='hold'){if(ok){G.ph='apick';log('Anklage genehmigt')}else{G.acc=false;G.ph='team';log('Anklage abgelehnt')}return}
   if(!ok){G.ph='team';log('Die Mehrheit klagt '+nm(G.asp)+' nicht an');return}
   if(P[G.asp].role=='T')return win('D',nm(G.asp)+' war der Tyrann – die Diplomaten gewinnen!');
-  G.esc++;addH('Falsche Anklage',true);log(nm(G.asp)+' war nicht der Tyrann – Saboteure +1');
+  G.esc++;addH('Falsche Anklage',true);log(nm(G.asp)+' war nicht der Tyrann – Spione +1');
   if(esc1('team'))return;
   G.ph='team';
 }
@@ -112,6 +115,7 @@ function act(p,a){
   switch(a.t){
     case 'start':if(ph!='lobby'||!host)return bad;if(n<5)return 'Mindestens 5 Spieler nötig';start();break;
     case 'kick':if(ph!='lobby'||!host||x==id||!G.order.includes(x))return bad;G.order=G.order.filter(i=>i!=x);if(P[x].res)P[x].res.end();delete P[x];break;
+    case 'avatar':if(ph!='lobby')return 'Im Spiel kann der Avatar nicht mehr gewechselt werden';if(!Number.isInteger(x)||x<0||x>11||Object.values(P).some(q=>q.id!=id&&q.av===x))return 'Dieser Avatar ist schon vergeben';p.av=x;break;
     case 'new':if(ph!='lobby'&&host)reset();break;
     case 'team':{
       if(ph!='team'||id!=G.pres||!Array.isArray(x)||x.length!=2||new Set(x).size!=2||!x.every(i=>i!=id&&G.order.includes(i)&&!P[i].dead))return bad;
@@ -131,12 +135,14 @@ function act(p,a){
       if(ph!='kill'||id!=G.pres||!t||t.dead||x==id)return bad;
       t.dead=true;log(nm(x)+' wurde hingerichtet und war: '+RN[t.role]);
       if(t.role=='T')win('D','Der Tyrann wurde hingerichtet – die Diplomaten gewinnen!');
-      else if(t.role=='S'){G.ph='night';G.nv={};log('Die Nacht bricht an …')}
+      else if(t.role=='S')offerStart();
       else G.ph=G.back;
       break}
     case 'nv':
-      if((ph!='night'&&ph!='guess')||P[id].dead||id in G.nv||!P[x]||P[x].dead||x==id)return bad;
-      G.nv[id]=x;if(Object.keys(G.nv).length==al().length)(ph=='guess'?gtally():convert());break;
+      if(ph!='guess'||P[id].dead||id in G.nv||!P[x]||P[x].dead||x==id)return bad;
+      G.nv[id]=x;if(Object.keys(G.nv).length==al().length)gtally();break;
+    case 'op':if(ph!='offer'||!G.offer||G.offer.to!=id||G.offer.st!='wait')return bad;G.offer.st='open';break;
+    case 'oa':if(ph!='offer'||!G.offer||G.offer.to!=id||G.offer.st!='open')return bad;offerEnd(!!x);break;
     // TESTMODUS-BEGIN
     case 'bot':case 'fill':{
       if(ph!='lobby'||!host)return bad;
@@ -144,7 +150,7 @@ function act(p,a){
       let add=a.t=='bot'?1:Math.max(0,7-n);
       while(add-->0&&G.order.length<10){
         const name=N.find(k=>!G.order.some(i=>P[i].name==k)),b='b'+cr.randomBytes(5).toString('hex');
-        P[b]={id:b,name,bot:true,role:null,res:null};G.order.push(b);
+        P[b]={id:b,name,bot:true,role:null,res:null,av:freeAv()};G.order.push(b);
       }
       break}
     // TESTMODUS-END
@@ -153,10 +159,10 @@ function act(p,a){
 }
 function view(id){
   const me=P[id],ph=G.ph,over=ph=='over',c=G.card!=null&&ph!='lobby'?CARDS[G.card]:null;
-  return{ph,sol:G.sol,esc:G.esc,hist:G.hist,ev:EV,last:G.last,me:{id,name:me.name,role:me.role,alive:!me.dead,host:G.order[0]==id},
-    pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
+  return{ph,sol:G.sol,esc:G.esc,hist:G.hist,ev:EV,last:G.last,me:{id,name:me.name,av:me.av,role:me.role,alive:!me.dead,host:G.order[0]==id},
+    pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,av:q.av,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
       role:(over||q.dead||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T'))||(me.role=='A'&&q.role=='S'&&!q.conv))?q.role:null}}),
-    pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,voted:Object.keys((ph=='night'||ph=='guess')?G.nv:G.votes),res:G.res,rej:G.rej,vn:al().filter(i=>!G.team.includes(i)).length,lv:G.lv,
+    pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,offer:ph=='offer'&&G.offer?{mine:G.offer.to==id,st:G.offer.st}:null,voted:Object.keys(ph=='guess'?G.nv:G.votes),res:G.res,rej:G.rej,vn:al().filter(i=>!G.team.includes(i)).length,lv:G.lv,
     priv:G.notes[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,win:G.win,why:G.why,log:G.log.slice(-40).reverse()};
 }
 // TESTMODUS-BEGIN
@@ -170,8 +176,9 @@ function botStep(){
   if(ph=='result'&&B(G.pres))return go(G.pres,{t:'next'});
   if(ph=='avote'){const b=al().find(i=>B(i)&&!(i in G.votes));if(b)return go(b,{t:'av',x:G.vq=='hold'?true:Math.random()<.5})}
   if(ph=='kill'&&B(G.pres))return go(G.pres,{t:'ki',x:pick(al().filter(i=>i!=G.pres))});
-  if(ph=='night'||ph=='guess'){const b=al().find(i=>B(i)&&!(i in G.nv));
-    if(b){let t=al().filter(i=>i!=b);if(ph=='night'&&(P[b].role=='S'||P[b].role=='T')){const d=t.filter(i=>P[i].role!='S'&&P[i].role!='T');if(d.length)t=d}return go(b,{t:'nv',x:pick(t)})}}
+  if(ph=='offer'&&G.offer&&B(G.offer.to))return go(G.offer.to,G.offer.st=='wait'?{t:'op'}:{t:'oa',x:Math.random()<.5});
+  if(ph=='guess'){const b=al().find(i=>B(i)&&!(i in G.nv));
+    if(b){let t=al().filter(i=>i!=b);return go(b,{t:'nv',x:pick(t)})}}
   return false;
 }
 // TESTMODUS-END
@@ -198,7 +205,7 @@ http.createServer((q,r)=>{
         else if(G.order.length>=10)out.err='Lobby voll (max. 10 Spieler)';
         else if(!name)out.err='Bitte Namen eingeben';
         else if(G.order.some(i=>P[i].name.toLowerCase()==name.toLowerCase()))out.err='Name schon vergeben';
-        else{const id='p'+cr.randomBytes(6).toString('hex');P[id]={id,name,role:null,res:null};G.order.push(id);out.id=id;bc()}
+        else{const id='p'+cr.randomBytes(6).toString('hex');P[id]={id,name,role:null,res:null,av:freeAv()};G.order.push(id);out.id=id;bc()}
       }else{
         const p=P[a.id];
         if(!p)out.err='Unbekannter Spieler – Seite neu laden';
