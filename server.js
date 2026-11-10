@@ -32,7 +32,7 @@ const freeAv=()=>{const t=new Set(Object.values(P).map(p=>p.av)),f=[...Array(30)
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,rej:0,lv:null,opts:[],notes:{},k4:false,back:null,nv:{},deck:[],win:null,why:'',last:null};for(const p of Object.values(P)){p.role=null;p.dead=false;p.conv=false}};
 reset();
-const log=m=>G.log.push(m),nm=i=>P[i].name,al=()=>G.order.filter(i=>!P[i].dead),RN={D:'Diplomat',A:'Analyst',S:'Spion',T:'Tyrann'};
+const log=m=>G.log.push(m),nm=i=>P[i].name,al=()=>G.order.filter(i=>!P[i].dead),RN={D:'Diplomat',A:'Botschafter',S:'Spion',T:'Tyrann'};
 const addH=(t,e)=>{G.hist.push({t,e});EV++;G.last={t,e}};
 const win=(w,why)=>{G.ph='over';G.win=w;G.why=why;log(why)};
 function round(){
@@ -48,7 +48,7 @@ function start(){
   log('Spiel gestartet. Vorstandschef: '+nm(G.order[G.idx]));round();
 }
 function endDip(){
-  if(al().some(i=>P[i].role=='A')){G.ph='guess';G.nv={};log('8 Krisen gelöst! Die Spione haben eine letzte Chance: Sie dürfen den Analysten erraten.')}
+  if(al().some(i=>P[i].role=='A')){G.ph='guess';G.nv={};log('8 Krisen gelöst! Die Spione haben eine letzte Chance: Sie dürfen den Botschafter erraten.')}
   else win('D','8 Krisen gelöst – die Diplomaten gewinnen!');
 }
 function resolve(){
@@ -77,8 +77,8 @@ function gtally(){
   const c={};
   for(const [i,t] of Object.entries(G.nv)){const a=P[i].role;if(a=='S'||a=='T')c[t]=(c[t]||0)+(a=='T'?1.5:1)}
   const e=Object.entries(c).sort((a,b)=>b[1]-a[1]),t=e.length?e[0][0]:null;
-  if(t&&P[t].role=='A')win('S',nm(t)+' war der Analyst – die Spione haben ihn enttarnt und gewinnen doch noch!');
-  else win('D',(t?nm(t)+' war nicht der Analyst – ':'')+'8 Krisen gelöst, die Diplomaten gewinnen!');
+  if(t&&P[t].role=='A')win('S',nm(t)+' war der Botschafter – die Spione haben ihn enttarnt und gewinnen doch noch!');
+  else win('D',(t?nm(t)+' war nicht der Botschafter – ':'')+'8 Krisen gelöst, die Diplomaten gewinnen!');
 }
 function esc1(back){
   if(G.esc>=8){win('S','8 Eskalationen – die Spione gewinnen!');return true}
@@ -135,6 +135,7 @@ function act(p,a){
       if(ph!='kill'||id!=G.pres||!t||t.dead||x==id)return bad;
       t.dead=true;log(nm(x)+' wurde hingerichtet und war: '+RN[t.role]);
       if(t.role=='T')win('D','Der Tyrann wurde hingerichtet – die Diplomaten gewinnen!');
+      else if(t.role=='A')win('S',nm(x)+' war der Botschafter – die Spione haben ihn hingerichtet und gewinnen sofort!');
       else if(t.role=='S')offerStart();
       else G.ph=G.back;
       break}

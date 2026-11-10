@@ -90,7 +90,7 @@ const AVN=30;
 const AV=Array.from({length:AVN},(_,i)=>({i}));
 function avh(i,z){return (i==null||i<0)?'':`<i class="av" style="width:${z}px;height:${z}px;background-size:${z*6}px ${z*5}px;background-position:-${(i%6)*z}px -${Math.floor(i/6)*z}px"></i>`}
 
-const RC={D:['Diplomat','#2563eb'],A:['Analyst','#0891b2'],S:['Spion','#dc2626'],T:['Tyrann','#7f1d1d']};
+const RC={D:['Diplomat','#2563eb'],A:['Botschafter','#0891b2'],S:['Spion','#dc2626'],T:['Tyrann','#7f1d1d']};
 async function api(o){
   o.id=id;
   try{const r=await fetch('/api',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(o)});
@@ -115,9 +115,9 @@ function connect(){
 }
 const HINTS={
 acc:'<b>⚖️ Stufe 3 – Anklage:</b> Ab 3 Eskalationen darf einmal pro Spiel jemand eine Anklage beantragen (vor der Vorstandswahl). Stimmt mehr als die Hälfte zu, nennt er einen Verdächtigen als Tyrannen, und alle stimmen ab. Ist es der Tyrann, gewinnen die Diplomaten sofort. Wenn nicht, bekommen die Spione eine Eskalation.',
-kill:'<b>⚔️ Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Mit der 5. Eskalation darf der Vorstandschef (der Vorsitzende der Runde) sofort einen Spieler hinrichten. Dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es ein Spion, bekommt ein zufälliger Diplomat (nie der Analyst) ein geheimes Angebot, die Seite zu wechseln.',
+kill:'<b>⚔️ Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Mit der 5. Eskalation darf der Vorstandschef (der Vorsitzende der Runde) sofort einen Spieler hinrichten. Dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es der Botschafter, gewinnen die Spione sofort. War es ein Spion, bekommt ein zufälliger Diplomat (nie der Botschafter) ein geheimes Angebot, die Seite zu wechseln.',
 lose:'<b>☠️ Stufe 8:</b> Mit der 8. Eskalation gewinnen die Spione.',
-win:'<b>🏆 Stufe 8:</b> Mit 8 gelösten Krisen gewinnen die Diplomaten – aber die Spione dürfen dann noch den Analysten erraten.'};
+win:'<b>🏆 Stufe 8:</b> Mit 8 gelösten Krisen gewinnen die Diplomaten – aber die Spione dürfen dann noch den Botschafter erraten.'};
 let hintTxt=null,ht=null;
 function hint(k){hintTxt=HINTS[k];clearTimeout(ht);ht=setTimeout(()=>{hintTxt=null;draw()},8000);draw()}
 function boardH(hl){
@@ -148,7 +148,7 @@ const RULES=`<h3>Worum geht es?</h3>
 <p>Diplomaten wollen historische Krisen friedlich lösen. Heimliche Spione wollen, dass sie eskalieren. Gespielt wird zusammen am Tisch: Jeder hat sein Handy, geredet, verdächtigt und geblufft wird laut.</p>
 <h3>Die Rollen (5 bis 10 Spieler)</h3>
 <ul><li><b>Diplomat:</b> wählt immer den friedlichen Weg und sucht die Spione.</li>
-<li><b>Analyst</b> (ein Diplomat): kennt die Spione, aber nicht den Tyrannen. Er muss die anderen lenken, ohne sich zu verraten.</li>
+<li><b>Botschafter</b> (ein Diplomat): kennt die Spione, aber nicht den Tyrannen. Er muss die anderen lenken, ohne sich zu verraten – wird er hingerichtet, gewinnen die Spione sofort.</li>
 <li><b>Spione:</b> kennen einander und den Tyrannen und eskalieren heimlich.</li>
 <li><b>Tyrann:</b> der geheime Anführer der Spione. Er kennt die anderen nicht.</li></ul>
 <p>Spione inklusive Tyrann: bei 5–6 Spielern 2, bei 7–8 Spielern 3, bei 9–10 Spielern 4. Deine Rolle siehst du über „Rolle &amp; Infos“: Kurz tippen zeigt sie 3 Sekunden, gedrückt halten zeigt sie, solange du hältst.</p>
@@ -162,10 +162,10 @@ const RULES=`<h3>Worum geht es?</h3>
 <h3>Spielbrett und Sonderplätze</h3>
 <p>Oben stehen zwei Leisten mit je 8 Plätzen: 🕊️ gelöste Krisen und 🔥 Eskalationen. Tippe auf einen Sonderplatz, um eine Erklärung zu sehen.</p>
 <ul><li>⚖️ <b>Stufe 3 – Anklage:</b> Einmal pro Spiel darf jemand vor der Vorstandswahl eine Anklage beantragen. Stimmt die Mehrheit zu, nennt er einen Verdächtigen als Tyrannen, und alle stimmen ab. Trifft es den Tyrannen, gewinnen die Diplomaten sofort, sonst bekommen die Spione eine Eskalation.</li>
-<li>💀 <b>Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Der Vorstandschef darf einen Spieler hinrichten, dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es ein Spion, bekommt ein zufälliger Diplomat (nie der Analyst) ein geheimes Angebot, die Seite zu wechseln.</li></ul>
+<li>💀 <b>Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Der Vorstandschef darf einen Spieler hinrichten, dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es der Botschafter, gewinnen die Spione sofort. War es ein Spion, bekommt ein zufälliger Diplomat (nie der Botschafter) ein geheimes Angebot, die Seite zu wechseln.</li></ul>
 <h3>Wer gewinnt?</h3>
-<ul><li><b>Diplomaten:</b> 8 gelöste Krisen, oder der Tyrann wird angeklagt oder hingerichtet. Haben sie 8 Krisen gelöst, dürfen die Spione noch einmal raten, wer der Analyst ist. Treffen sie, gewinnen sie doch noch.</li>
-<li><b>Spione:</b> 8 Eskalationen.</li></ul>
+<ul><li><b>Diplomaten:</b> 8 gelöste Krisen, oder der Tyrann wird angeklagt oder hingerichtet. Haben sie 8 Krisen gelöst, dürfen die Spione noch einmal raten, wer der Botschafter ist. Treffen sie, gewinnen sie doch noch.</li>
+<li><b>Spione:</b> 8 Eskalationen, oder der Botschafter wird hingerichtet.</li></ul>
 <h3>So geht es los</h3>
 <ol><li><b>Jeder öffnet den Link</b> auf seinem eigenen Handy (iPhone oder Android), gibt seinen Namen ein und tippt auf „Beitreten“. Ihr braucht <b>5 bis 10 Spieler</b>, jeder mit einem Handy.</li>
 <li><b>Der Host</b> ist der erste Spieler, der beitritt. Er sollte deshalb zuerst beitreten. Er leitet die Runde: Er startet das Spiel, kann in der Lobby Spieler entfernen und das Spiel jederzeit neu starten. Spieler, die zu spät kommen, können nach dem Start nicht mehr beitreten.</li>
@@ -217,7 +217,7 @@ function draw(){document.body.classList.toggle('home',!S);
     else if(o&&o.mine)s='<h2>📩 Ein geheimes Angebot</h2><p>Die Spione bieten dir an, die Seite zu wechseln. Du <b>kannst</b> wechseln, du <b>musst</b> aber nicht.</p><p><small>Wenn du annimmst, wirst du Spion und lernst deine Mitstreiter kennen. Sie erfahren, dass du dabei bist. Wenn du ablehnst, bleibt alles wie bisher, und niemand außer den Spionen erfährt, dass ein Angebot gemacht wurde.</small></p><div class="row"><button class="nein" onclick="act(\'oa\',true)">Wechseln</button><button class="ja" onclick="act(\'oa\',false)">Ablehnen</button></div>';
     else s='<p style="text-align:center">🌙 <b>Ein Spion wurde hingerichtet.</b><br>Eine geheime Nachricht wird zugestellt …<br><small>Bitte kurz warten.</small></p>';
   }
-  if(ph=='guess')s=!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>🎯 Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+'</p>':'<p>🎯 <b>Letzte Chance der Spione.</b> Alle Handys zeigen dasselbe. Tippe, wer der Analyst sein könnte. <small>(Nur die Wahl der Spione zählt.)</small></p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'nv\',\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join('');
+  if(ph=='guess')s=!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>🎯 Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+'</p>':'<p>🎯 <b>Letzte Chance der Spione.</b> Alle Handys zeigen dasselbe. Tippe, wer der Botschafter sein könnte. <small>(Nur die Wahl der Spione zählt.)</small></p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'nv\',\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join('');
   if(ph=='over')s+='<h2>'+(S.win=='D'?'🕊️ Diplomaten gewinnen':'😈 Spione gewinnen')+'</h2><p>'+esc(S.why)+'</p>'+(m.host?'<button class="go" onclick="act(\'new\')">Neues Spiel (Lobby)</button>':'');
   if(m.host&&ph!='lobby'&&ph!='over')s+='<button onclick="if(confirm(\'Spiel abbrechen und zurück zur Lobby?\'))act(\'new\')">Spiel neu starten (Host)</button>';
   h+='<div class="panel">'+s+'</div>';
