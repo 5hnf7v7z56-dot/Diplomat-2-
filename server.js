@@ -28,7 +28,7 @@ const CARDS=[
 ['Mekong-Staudämme','Ein Land am Oberlauf des Mekong baut große Staudämme. Länder flussabwärts bekommen weniger Wasser für Reisfelder und Fische und drohen mit Gegenmaßnahmen. Ihr beratet das Land am Oberlauf.','Die Wassermenge mit den Ländern flussabwärts abstimmen und Daten teilen. Frieden, aber weniger Strom.','Die Dämme nach eigenem Bedarf betreiben. Mehr Strom, aber die Nachbarn fühlen sich bedroht.'],
 ['Arktis','Das Eis in der Arktis schmilzt, neue Seewege und Rohstoffe werden frei. Mehrere Länder erheben Anspruch auf dieselben Meeresgebiete und schicken Schiffe. Ihr beratet eines davon.','Ein gemeinsames Abkommen über Seewege und Rohstoffe verhandeln. Sicher, aber man teilt den Gewinn.','Den Anspruch mit Marineschiffen sichern. Mehr Kontrolle, aber ein Wettrüsten beginnt.']];
 const PA='BBAABABBBABB'+'AAAAAAAAAAAA';CARDS.forEach((c,i)=>{if(PA[i]=='B'){const t=c[2];c[2]=c[3];c[3]=t}}); // [2]=friedlicher Weg, [3]=Eskalation
-const freeAv=()=>{const t=new Set(Object.values(P).map(p=>p.av)),f=[...Array(12).keys()].filter(i=>!t.has(i));return f.length?f[Math.random()*f.length|0]:0};
+const freeAv=()=>{const t=new Set(Object.values(P).map(p=>p.av)),f=[...Array(30).keys()].filter(i=>!t.has(i));return f.length?f[Math.random()*f.length|0]:0};
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
 const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,rej:0,lv:null,opts:[],notes:{},k4:false,back:null,nv:{},deck:[],win:null,why:'',last:null};for(const p of Object.values(P)){p.role=null;p.dead=false;p.conv=false}};
 reset();
@@ -115,7 +115,7 @@ function act(p,a){
   switch(a.t){
     case 'start':if(ph!='lobby'||!host)return bad;if(n<5)return 'Mindestens 5 Spieler nötig';start();break;
     case 'kick':if(ph!='lobby'||!host||x==id||!G.order.includes(x))return bad;G.order=G.order.filter(i=>i!=x);if(P[x].res)P[x].res.end();delete P[x];break;
-    case 'avatar':if(ph!='lobby')return 'Im Spiel kann der Avatar nicht mehr gewechselt werden';if(!Number.isInteger(x)||x<0||x>11||Object.values(P).some(q=>q.id!=id&&q.av===x))return 'Dieser Avatar ist schon vergeben';p.av=x;break;
+    case 'avatar':if(ph!='lobby')return 'Im Spiel kann der Avatar nicht mehr gewechselt werden';if(!Number.isInteger(x)||x<0||x>29||Object.values(P).some(q=>q.id!=id&&q.av===x))return 'Dieser Avatar ist schon vergeben';p.av=x;break;
     case 'new':if(ph!='lobby'&&host)reset();break;
     case 'team':{
       if(ph!='team'||id!=G.pres||!Array.isArray(x)||x.length!=2||new Set(x).size!=2||!x.every(i=>i!=id&&G.order.includes(i)&&!P[i].dead))return bad;
@@ -214,6 +214,9 @@ http.createServer((q,r)=>{
       r.writeHead(200,{'Content-Type':'application/json'});r.end(JSON.stringify(out));
     });return;
   }
+  if(u.pathname=='/manifest.webmanifest'){r.writeHead(200,{'Content-Type':'application/manifest+json','Cache-Control':'max-age=3600'});return r.end(JSON.stringify({name:'Diplomat',short_name:'Diplomat',description:'Diplomat – das Gruppenspiel für den Tisch',start_url:'/',scope:'/',display:'standalone',orientation:'portrait',background_color:'#12151c',theme_color:'#12151c',lang:'de',icons:[{src:'/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:'/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'}]}))}
+  if(u.pathname=='/sw.js'){r.writeHead(200,{'Content-Type':'application/javascript','Cache-Control':'no-cache'});return r.end("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',()=>{});")}
+  if(u.pathname=='/icon-192.png'||u.pathname=='/icon-512.png'||u.pathname=='/apple-touch-icon.png'){const f=u.pathname=='/icon-512.png'?'icon-512.png':'icon-192.png';try{const b=fs.readFileSync(__dirname+'/'+f);r.writeHead(200,{'Content-Type':'image/png','Cache-Control':'max-age=86400'});return r.end(b)}catch(e){r.writeHead(404);return r.end()}}
   if(u.pathname=='/bg.jpg'){r.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'max-age=86400'});return r.end(fs.readFileSync(__dirname+'/bg.jpg'))}
   r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});
   r.end(fs.readFileSync(__dirname+'/index.html'));
