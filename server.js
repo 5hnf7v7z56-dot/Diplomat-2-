@@ -116,6 +116,7 @@ function act(p,a){
     case 'start':if(ph!='lobby'||!host)return bad;if(n<5)return 'Mindestens 5 Spieler nötig';start();break;
     case 'kick':if(ph!='lobby'||!host||x==id||!G.order.includes(x))return bad;G.order=G.order.filter(i=>i!=x);if(P[x].res)P[x].res.end();delete P[x];break;
     case 'avatar':if(ph!='lobby')return 'Im Spiel kann der Avatar nicht mehr gewechselt werden';if(!Number.isInteger(x)||x<0||x>29||Object.values(P).some(q=>q.id!=id&&q.av===x))return 'Dieser Avatar ist schon vergeben';p.av=x;break;
+    case 'leave':if(ph!='lobby')return bad;G.order=G.order.filter(i=>i!=id);if(P[id].res)P[id].res.end();delete P[id];return;
     case 'new':if(ph!='lobby'&&host)reset();break;
     case 'team':{
       if(ph!='team'||id!=G.pres||!Array.isArray(x)||x.length!=2||new Set(x).size!=2||!x.every(i=>i!=id&&G.order.includes(i)&&!P[i].dead))return bad;

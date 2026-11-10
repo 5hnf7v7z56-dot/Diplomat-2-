@@ -83,7 +83,7 @@ body.home::before{background:#12151c}
 button .av{margin-right:6px;vertical-align:middle}
 </style></head><body><div id="topbar" style="max-width:480px;margin:0 auto;padding-top:12px"></div><div id="app"></div>
 <script>
-let S=null,id=localStorage.kr_id,show=false,sel=[],info=false,ev=null;
+let ES=null,S=null,id=localStorage.kr_id,show=false,sel=[],info=false,ev=null;
 const $=document.getElementById('app');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const AVN=30;
@@ -98,6 +98,7 @@ async function api(o){
   catch(e){alert('Keine Verbindung zum Server');return{}}
 }
 const act=(t,x)=>api({t,x});
+async function leave(){if(!confirm('Zurück zur Anmeldung? Du verlässt die Lobby und kannst unter neuem Namen beitreten.'))return;await api({t:'leave'});if(ES)ES.close();ES=null;localStorage.removeItem('kr_id');id=null;S=null;ev=null;conn(true);draw()}
 const tg=i=>{sel=sel.includes(i)?sel.filter(k=>k!=i):sel.length<2?sel.concat(i):sel;draw()};
 async function join(){
   const j=await api({t:'join',name:document.getElementById('n').value});
@@ -108,7 +109,7 @@ let wl=null;async function keepAwake(){try{if('wakeLock' in navigator&&document.
 document.addEventListener('visibilitychange',()=>{if(S)keepAwake()});
 try{if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{})}catch(e){}
 function connect(){
-  const es=new EventSource('/events?id='+id);keepAwake();
+  const es=ES=new EventSource('/events?id='+id);keepAwake();
   es.onopen=()=>conn(true);
   es.onmessage=e=>{conn(true);S=JSON.parse(e.data);if(ev!==null&&S.ev!==ev&&S.last)showOv(S.last);ev=S.ev;draw()};
   es.onerror=()=>{if(es.readyState==2){localStorage.removeItem('kr_id');id=null;S=null;conn(true);draw()}else conn(false)};
@@ -194,7 +195,7 @@ function draw(){document.body.classList.toggle('home',!S);
   const lvH=S.lv?'<small>Letzte Vorstandswahl: '+S.lv.map(x=>esc(x[0])+(x[1]?' ✅':' ❌')).join(', ')+'</small>':'';
   const yn=(t)=>!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+' abgestimmt</p>':'<div class="row"><button class="ja" onclick="act(\''+t+'\',true)">JA</button><button class="nein" onclick="act(\''+t+'\',false)">NEIN</button></div>';
   if(ph=='lobby'){
-    s='<p>'+n+'/10 Spieler (mind. 5)</p>'+(m.host?'<button class="go" onclick="act(\'start\')">Spiel starten</button>':'<p>Warte auf den Host…</p>')+'<p><small>Wähle deinen Avatar:</small></p><div class="avp">'+AV.map((a,i)=>{const tk=L.some(p=>p.av===i&&p.id!=m.id);return '<button class="avb'+(m.av===i?' on':'')+'" '+(tk?'disabled':'')+' onclick="act(\'avatar\','+i+')">'+avh(i,46)+'</button>'}).join('')+'</div>';
+    s='<p>'+n+'/10 Spieler (mind. 5)</p>'+(m.host?'<button class="go" onclick="act(\'start\')">Spiel starten</button>':'<p>Warte auf den Host…</p>')+'<p><small>Wähle deinen Avatar:</small></p><div class="avp">'+AV.map((a,i)=>{const tk=L.some(p=>p.av===i&&p.id!=m.id);return '<button class="avb'+(m.av===i?' on':'')+'" '+(tk?'disabled':'')+' onclick="act(\'avatar\','+i+')">'+avh(i,46)+'</button>'}).join('')+'</div>';s+='<button class="sm" style="margin-top:12px" onclick="leave()">↩️ Zurück / Name ändern</button><details class="rules"><summary>📖 Spielregeln & Anleitung</summary><div class="rb">'+RULES+'</div></details>';
     // TESTMODUS-BEGIN
     if(m.host&&/[?&]test/.test(location.search))s+='<p><small>Testmodus:</small></p><div class="row"><button onclick="act(\'bot\')">+ Bot</button><button onclick="act(\'fill\')">Auf 7 füllen</button></div>';
     // TESTMODUS-END
