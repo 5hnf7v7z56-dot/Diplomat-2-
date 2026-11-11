@@ -44,12 +44,12 @@ function start(){
   const n=G.order.length,s=[0,0,0,0,0,2,2,3,3,4,4][n];
   const roles=shuf(['T',...Array(s-1).fill('S'),'A',...Array(n-s-1).fill('D')]);
   G.order.forEach((i,k)=>{P[i].role=roles[k];G.notes[i]=[]});
+  G.amb=shuf(G.order.filter(i=>P[i].role=='S'))[0];
   G.deck=shuf(CARDS.map((_,i)=>i));G.idx=Math.random()*n|0;
   log('Spiel gestartet. Vorstandschef: '+nm(G.order[G.idx]));round();
 }
 function endDip(){
-  if(al().some(i=>P[i].role=='A')){G.ph='guess';G.nv={};log('8 Krisen gelöst! Die Spione haben eine letzte Chance: Sie dürfen den Botschafter erraten.')}
-  else win('D','8 Krisen gelöst – die Diplomaten gewinnen!');
+  win('D','8 Krisen gelöst – die Diplomaten gewinnen!');
 }
 function resolve(){
   const ne=Object.values(G.votes).filter(c=>c=='E').length,esc=ne>=NEED;
@@ -106,6 +106,7 @@ function atally(){
   if(G.vq=='hold'){if(ok){G.ph='apick';log('Anklage genehmigt')}else{G.acc=false;G.ph='team';log('Anklage abgelehnt')}return}
   if(!ok){G.ph='team';log('Die Mehrheit klagt '+nm(G.asp)+' nicht an');return}
   if(P[G.asp].role=='T')return win('D',nm(G.asp)+' war der Tyrann – die Diplomaten gewinnen!');
+  if(P[G.asp].role=='A')return win('S',nm(G.asp)+' war der Botschafter – die Spione haben ihn angeklagt und gewinnen sofort!');
   G.esc++;addH('Falsche Anklage',true);log(nm(G.asp)+' war nicht der Tyrann – Spione +1');
   if(esc1('team'))return;
   G.ph='team';
@@ -163,7 +164,7 @@ function view(id){
   const me=P[id],ph=G.ph,over=ph=='over',c=G.card!=null&&ph!='lobby'?CARDS[G.card]:null;
   return{ph,sol:G.sol,esc:G.esc,hist:G.hist,ev:EV,last:G.last,me:{id,name:me.name,av:me.av,role:me.role,alive:!me.dead,host:G.order[0]==id},
     pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,av:q.av,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
-      role:(over||q.dead||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T'))||(me.role=='A'&&q.role=='S'&&!q.conv))?q.role:null}}),
+      role:(over||q.dead||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T'))||(me.role=='A'&&q.id==G.amb&&q.role=='S'&&!q.conv))?q.role:null}}),
     pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,offer:ph=='offer'&&G.offer?{mine:G.offer.to==id,st:G.offer.st}:null,voted:Object.keys(ph=='guess'?G.nv:G.votes),res:G.res,rej:G.rej,vn:al().filter(i=>!G.team.includes(i)).length,lv:G.lv,
     priv:G.notes[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,win:G.win,why:G.why,log:G.log.slice(-40).reverse()};
 }
