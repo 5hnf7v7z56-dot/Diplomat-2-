@@ -81,6 +81,44 @@ body.home::before{background:#12151c}
 .avb{display:flex;align-items:center;justify-content:center;padding:4px;margin:0;min-width:0;width:100%;box-sizing:border-box;border-radius:12px;min-height:0}
 .avb:disabled{opacity:.25}.avb.on{outline:3px solid #fcd34d;background:#4b5563}
 button .av{margin-right:6px;vertical-align:middle}
+
+.phb{border-radius:12px;padding:10px 12px;margin:8px 0;color:#fff;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;box-shadow:0 2px 10px #0008}
+.phb b{font-size:16px}.phb small{color:#ffffffcc;margin-left:auto}.phb span{flex-basis:100%;font-size:13px;color:#ffffffe6}
+.panel.warn{background:rgba(180,83,9,.35);border:1px solid #f59e0b}
+.acb{background:#7e22ce}
+#fx{position:fixed;inset:0;z-index:25;background:#000e;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}
+.fxb{width:100%;max-width:420px;text-align:center;background:#12151c;border-radius:16px;padding:16px;border:3px solid #64748b;box-shadow:0 10px 40px #000}
+#fx.good .fxb{border-color:#22c55e}#fx.bad .fxb{border-color:#f59e0b}#fx.neutral .fxb{border-color:#a855f7}#fx.sw .fxb{border-color:#dc2626}
+#fx.fail{background:#450a0acc}#fx.fail .fxb{border:4px solid #ef4444;background:#1c0505;animation:shk .5s 2}
+@keyframes shk{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.fxbig{font-size:26px;font-weight:900;margin:8px 0;padding:10px;border-radius:12px}
+.fxbig.ok{background:#14532d;color:#bbf7d0}.fxbig.no{background:#7f1d1d;color:#fecaca}.fxbig.mid{background:#4c1d95;color:#e9d5ff;font-size:22px}
+.fxhuge{font-size:36px;font-weight:900;line-height:1.1;color:#fca5a5;margin:6px 0 12px;text-shadow:0 0 18px #ef4444;animation:pu2 1s ease-in-out infinite}
+@keyframes pu2{50%{transform:scale(1.06)}}
+.fxt{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:8px 0}.fxt div{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:80px;font-size:15px}
+.fxv{width:100%;max-height:55vh;border-radius:12px;background:#000;display:block;margin:8px 0}
+#vid{position:fixed;inset:0;z-index:50;background:#000;display:flex;align-items:center;justify-content:center}
+#vid video{width:100%;height:100%;object-fit:contain;background:#000}
+#vid .vh{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 14px);left:0;right:0;text-align:center;color:#fff9;font-size:12px;pointer-events:none}
+#vid button{position:absolute;top:calc(env(safe-area-inset-top) + 12px);right:12px;background:#000a;border:1px solid #fff6}
+#end{position:fixed;inset:0;z-index:40;overflow:auto;background:#0b0d12;padding:0 0 28px;text-align:center}
+#end>*:not(.eimg){max-width:480px;margin-left:auto;margin-right:auto;padding-left:14px;padding-right:14px;box-sizing:border-box}
+.eimg{position:relative;max-width:480px;margin:0 auto}.eimg img{display:block;width:100%}
+.end.lost .eimg img{filter:grayscale(.9) brightness(.5)}
+.elose{position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(transparent,#05060a 16%);display:flex;align-items:center;justify-content:center}
+.elose span{font-size:clamp(30px,10vw,48px);font-weight:900;color:#e5e7eb;letter-spacing:3px;text-shadow:0 3px 12px #000;margin-top:24px}
+.et{font-size:clamp(36px,13vw,60px);margin:8px 0 0;letter-spacing:3px}.end.won .et{color:#fcd34d;text-shadow:0 0 20px #f59e0b}.end.lost .et{color:#9ca3af}
+.ewhy{font-size:15px}.rb2{font-size:13px;padding:3px 8px;border-radius:8px;font-weight:700}
+#end .p.me{outline:2px solid #fcd34d}#end .panel{text-align:left}
+.rnd{background:rgba(20,24,34,.9);border-radius:12px;padding:10px;margin:0 0 18px;border:1px solid #334155}.rnd.live{border-color:#fcd34d}
+.rh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;font-size:15px}
+.chip{font-size:12px;padding:3px 8px;border-radius:10px;white-space:nowrap}.chip.e{background:#7f1d1d}.chip.p{background:#14532d}.chip.now{background:#a16207}
+.le{font-size:13px;color:#d1d5db;padding:8px 10px;margin:6px 0;border-left:5px solid #475569;background:#ffffff0d;border-radius:0 8px 8px 0;line-height:1.4}
+.le.k-team{border-color:#3b82f6;background:#1d4ed822}.le.k-elec-ok{border-color:#22c55e;background:#16a34a26;color:#fff}.le.k-elec-no{border-color:#f59e0b;background:#f59e0b22;color:#fff}
+.le.k-elec-fail{border-color:#ef4444;background:#dc262644;color:#fff;font-weight:800;font-size:14px}
+.le.k-res-e{border-color:#ef4444;background:#dc262633;color:#fff;font-weight:700}.le.k-res-p{border-color:#22c55e;background:#16a34a33;color:#fff;font-weight:700}
+.le.k-acc{border-color:#a855f7;background:#7e22ce2e;color:#fff}.le.k-kill{border-color:#b91c1c;background:#7f1d1d55;color:#fff;font-weight:700}
+.le.k-offer{border-color:#f97316;background:#c2410c2e;color:#fff}.le.k-win{border-color:#fcd34d;background:#a1620744;color:#fff;font-weight:800;font-size:15px}
 </style></head><body><div id="topbar" style="max-width:480px;margin:0 auto;padding-top:12px"></div><div id="app"></div>
 <script>
 let ES=null,S=null,id=localStorage.kr_id,show=false,sel=[],info=false,ev=null;
@@ -111,16 +149,94 @@ try{if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').c
 function connect(){
   const es=ES=new EventSource('/events?id='+id);keepAwake();
   es.onopen=()=>conn(true);
-  es.onmessage=e=>{conn(true);S=JSON.parse(e.data);if(ev!==null&&S.ev!==ev&&S.last)showOv(S.last);ev=S.ev;draw()};
+  es.onmessage=e=>{conn(true);S=JSON.parse(e.data);onState();if(ev!==null&&S.ev!==ev&&S.last&&S.ph!='over')showOv(S.last);ev=S.ev;draw()};
   es.onerror=()=>{if(es.readyState==2){localStorage.removeItem('kr_id');id=null;S=null;conn(true);draw()}else conn(false)};
 }
 const HINTS={
-acc:'<b>⚖️ Stufe 3 – Anklage:</b> Ab 3 Eskalationen darf einmal pro Spiel jemand eine Anklage beantragen (vor der Vorstandswahl). Stimmt mehr als die Hälfte zu, nennt er einen Verdächtigen als Tyrannen, und alle stimmen ab. Ist es der Tyrann, gewinnen die Diplomaten sofort. Ist es der Botschafter, gewinnen die Spione sofort. Wenn nicht, bekommen die Spione eine Eskalation.',
+acc:'<b>⚖️ Stufe 3 – Anklage:</b> Ab 3 Eskalationen darf der amtierende <b>Vorstandschef</b> einmal pro Spiel eine Anklage aussprechen. Sie dient nur dazu, den Tyrannen zu finden. Er nennt einen Verdächtigen, und alle außer dem Angeklagten stimmen ab. Ist es der Tyrann, gewinnen die Diplomaten sofort. Ist es der Botschafter, gewinnen die Spione sofort. Sonst bekommt <b>keine Seite einen Punkt</b>. Lehnt die Mehrheit die Anklage ab, bleibt sie bestehen, bis sie durchgeführt wurde.',
 kill:'<b>⚔️ Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Mit der 5. Eskalation darf der Vorstandschef (der Vorsitzende der Runde) sofort einen Spieler hinrichten. Dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es der Botschafter, gewinnen die Spione sofort. War es ein Spion, bekommt ein zufälliger Diplomat (nie der Botschafter) ein geheimes Angebot, die Seite zu wechseln.',
 lose:'<b>☠️ Stufe 8:</b> Mit der 8. Eskalation gewinnen die Spione.',
 win:'<b>🏆 Stufe 8:</b> Mit 8 gelösten Krisen gewinnen die Diplomaten sofort.'};
 let hintTxt=null,ht=null;
 function hint(k){hintTxt=HINTS[k];clearTimeout(ht);ht=setTimeout(()=>{hintTxt=null;draw()},8000);draw()}
+
+/* ===== Phasen, Pop-ups, Videos, Endbildschirm ===== */
+let endState=0,firstMsg=true,fxSeen=0,fxq=[],fxOpen=false,fxT=null;
+const PH={lobby:['👥 Lobby','#475569'],team:['🗳️ Vorstandsbildung','#1d4ed8'],tvote:['🗳️ Vorstandswahl','#4f46e5'],vote:['🤫 Geheime Wahl im Vorstand','#0f766e'],result:['📋 Ergebnis der Krise','#15803d'],apick:['⚖️ Anklage','#7e22ce'],avote:['⚖️ Anklage-Abstimmung','#7e22ce'],kill:['⚔️ Direkte Hinrichtung','#991b1b'],offer:['📩 Geheimes Angebot','#c2410c'],guess:['🎯 Letzte Chance','#a16207'],over:['🏁 Spielende','#334155']};
+function phaseBar(){
+  if(!S)return '';const L=S.pl,nm=i=>(L.find(p=>p.id==i)||{}).name||'?',p=PH[S.ph]||['',''];let d='';
+  if(S.ph=='team')d=esc(nm(S.pres))+' wählt 2 Vorstandsmitglieder'+(S.sec?' – <b>zweiter Versuch</b>':'');
+  else if(S.ph=='tvote')d='Alle außer dem Vorstand stimmen offen ab';
+  else if(S.ph=='vote')d='Die 3 Vorstandsmitglieder wählen heimlich';
+  else if(S.ph=='result')d=S.res?(S.res.esc?'Die Krise ist eskaliert':'Die Krise wurde gelöst'):'';
+  else if(S.ph=='apick')d=esc(nm(S.asker))+' wählt einen Verdächtigen';
+  else if(S.ph=='avote')d='Anklage gegen '+esc(nm(S.asp))+' – der Angeklagte stimmt nicht mit';
+  else if(S.ph=='kill')d=esc(nm(S.pres))+' entscheidet über eine Hinrichtung';
+  else if(S.ph=='offer')d='Eine geheime Nachricht wird zugestellt';
+  return '<div class="phb" style="background:'+p[1]+'"><b>'+p[0]+'</b>'+(S.rd&&S.ph!='lobby'&&S.ph!='over'?'<small>Runde '+S.rd+'</small>':'')+'<span>'+d+'</span></div>';
+}
+function logH(){
+  const rs=[];let cur=null;
+  S.log.forEach(e=>{if(!cur||cur.n!=e.n){cur={n:e.n,items:[]};rs.push(cur)}cur.items.push(e)});
+  return rs.reverse().map(r=>{
+    const hd=r.items.find(e=>e.k=='round'),o=r.items.some(e=>e.k=='res-e')?'e':r.items.some(e=>e.k=='res-p')?'p':'',live=r.n==S.rd&&S.ph!='over';
+    return '<div class="rnd'+(live?' live':'')+'"><div class="rh"><b>'+(r.n?'Runde '+r.n+(hd?': '+esc(hd.m):''):'Spielstart')+'</b>'+(live?'<span class="chip now">läuft</span>':o=='e'?'<span class="chip e">🔥 eskaliert</span>':o=='p'?'<span class="chip p">🕊️ gelöst</span>':'')+'</div>'
+      +r.items.filter(e=>e.k!='round').map(e=>'<div class="le k-'+e.k+'">'+esc(e.m).replace(/\n/g,'<br>')+'</div>').join('')+'</div>'}).join('');
+}
+function onState(){
+  const first=firstMsg;firstMsg=false;
+  if(first)fxSeen=S.fx?S.fx.n:0;
+  if(S.ph=='over'){
+    const o=document.getElementById('ov2');if(o)o.remove();closeFx(true);roleClose();
+    if(endState==0){if(first)endState=2;else{endState=1;playVideo(S.win)}}
+  }else{
+    if(endState){endState=0;closeVid()}
+    if(S.fx&&S.fx.n>fxSeen){fxSeen=S.fx.n;fxq.push(S.fx);nextFx()}
+  }
+}
+const pav=n=>{const p=S.pl.find(x=>x.name==n);return p?avh(p.av,44):''};
+function nextFx(){
+  if(fxOpen||!fxq.length||!S||S.ph=='over')return;
+  const f=fxq.shift();fxOpen=true;
+  const d=document.createElement('div');d.id='fx';let h='',auto=0,cls='';
+  const team=l=>'<div class="fxt">'+l.map(n=>'<div>'+pav(n)+'<b>'+esc(n)+'</b></div>').join('')+'</div>';
+  if(f.type=='elec'){
+    const r=f.rec,vs='<small>Ja: '+esc(r.yes.join(', ')||'–')+'<br>Nein: '+esc(r.no.join(', ')||'–')+'</small>';
+    if(f.res=='ok'){cls='good';h='<h2>🗳️ Vorstandswahl #'+r.n+'</h2><div class="fxbig ok">✅ ANGENOMMEN</div><p>Dieser Vorstand wurde gewählt:</p>'+team(r.team)+'<p><small>Vorstandschef: '+esc(r.chair)+'</small></p>'+vs;auto=10}
+    else if(f.res=='again'){cls='bad';h='<h2>🗳️ Vorstandswahl #'+r.n+'</h2><div class="fxbig no">❌ ABGELEHNT</div><p>Abgelehnter Vorstand:</p>'+team(r.team)+vs+'<p><b>'+esc(f.chair)+'</b> darf jetzt einen <b>zweiten Vorstand</b> bestimmen.</p>'}
+    else{cls='fail';h='<div class="fxhuge">❌<br>VORSTAND<br>GESCHEITERT</div><p>Auch der zweite Vorstand wurde abgelehnt.</p>'+team(r.team)+vs+(f.forced?'<p><b>Dreimal keine Koalition – die Spione bekommen einen Punkt (Eskalation).</b></p>':'<p>Neuer Vorstandschef: <b>'+esc(f.chair)+'</b><br><small>Gescheiterte Vorstandsrunden: '+f.rej+'/3</small></p>')}
+  }else if(f.type=='acc'){
+    if(!f.ok){cls='bad';h='<h2>⚖️ Anklage gegen '+esc(f.name)+'</h2><div class="fxbig no">❌ NICHT DURCHGEFÜHRT</div><p>Die Mehrheit stimmte dagegen ('+f.y+' Ja / '+f.no+' Nein).</p><p><small>Die ausgesprochene Anklage bleibt bestehen. Der Vorstandschef kann sie später durchführen.</small></p>'}
+    else{cls='neutral';h='<h2>⚖️ Anklage gegen '+esc(f.name)+'</h2><div class="fxbig mid">'+esc(f.name)+' war <u>nicht</u> der Tyrann</div><p>('+f.y+' Ja / '+f.no+' Nein)</p><p><b>Keine Seite bekommt einen Punkt.</b></p>'}
+  }else if(f.type=='switch'){
+    cls='sw';h='<h2>🔄 Seitenwechsel</h2><video class="fxv" src="/switch.mp4" muted autoplay playsinline webkit-playsinline preload="auto" onclick="this.muted=!this.muted"></video><div class="fxbig no">😈 Ein neuer Spion ist dem Team beigetreten</div>';
+  }
+  d.className=cls;d.innerHTML='<div class="fxb">'+h+'<button class="go" onclick="closeFx()">OK</button></div>';
+  document.body.appendChild(d);
+  const v=d.querySelector('video');if(v){const p=v.play();if(p&&p.catch)p.catch(()=>{})}
+  if(auto)fxT=setTimeout(closeFx,auto*1000);
+}
+function closeFx(clear){clearTimeout(fxT);const d=document.getElementById('fx');if(d)d.remove();fxOpen=false;if(clear===true)fxq=[];else setTimeout(nextFx,250)}
+function closeVid(){const d=document.getElementById('vid');if(d){const v=d.querySelector('video');if(v)v.pause();d.remove()}}
+function playVideo(w){
+  closeVid();closeFx(true);
+  const d=document.createElement('div');d.id='vid';
+  d.innerHTML='<video src="/'+(w=='S'?'war':'peace')+'.mp4" muted autoplay playsinline webkit-playsinline preload="auto"></video><div class="vh">Tippen = Ton an/aus</div><button class="sm" id="vskip">Überspringen ▶</button>';
+  document.body.appendChild(d);
+  const v=d.querySelector('video'),fin=()=>{if(endState!=1)return;closeVid();endState=2;draw()};
+  v.onended=fin;v.onerror=fin;v.onclick=()=>{v.muted=!v.muted};
+  d.querySelector('#vskip').onclick=e=>{e.stopPropagation();fin()};
+  const p=v.play();if(p&&p.catch)p.catch(fin);
+  setTimeout(fin,12000);
+}
+function endH(){
+  const m=S.me,L=S.pl,sp=(m.role=='S'||m.role=='T'),won=(S.win=='S')==sp;
+  const rows=L.map(p=>{const ps=(p.role=='S'||p.role=='T'),w=(S.win=='S')==ps;return '<div class="p'+(p.id==m.id?' me':'')+'"><span>'+avh(p.av,34)+'<span>'+esc(p.name)+(p.id==m.id?' (du)':'')+'</span></span><span class="rb2" style="background:'+(p.role?RC[p.role][1]:'#444')+'">'+(p.role?RC[p.role][0]:'?')+(w?' 🏆':'')+'</span></div>'}).join('');
+  return '<div id="end" class="end '+(won?'won':'lost')+'"><div class="eimg"><img src="/'+(sp?'win-spies':'win-diplomats')+'.jpg" alt="">'+(won?'':'<div class="elose"><span>NIEDERLAGE</span></div>')+'</div>'
+    +'<h1 class="et">'+(won?'🏆 SIEG':'💔 NIEDERLAGE')+'</h1><h2>'+(S.win=='S'?'😈 Die Spione haben gewonnen':'🕊️ Die Diplomaten haben gewonnen')+'</h2>'
+    +'<p class="ewhy">'+esc(S.why)+'</p><div class="panel"><b>Alle Rollen</b>'+rows+'</div>'
+    +(m.host?'<button class="go" onclick="act(\'new\')">Neues Spiel (Lobby)</button>':'<p style="text-align:center"><small>Warte auf den Host für ein neues Spiel…</small></p>')+'</div>';
+}
 function boardH(hl){
   const row=(e,ic,cl,N,em,hk)=>{const l=S.hist.filter(x=>x.e==e);let r='';for(let i=0;i<N;i++){const f=l[i];r+='<div class="sl'+(f?' '+cl:'')+(hl===e&&i==l.length-1?' new':'')+'"'+(hk[i]?' onclick="hint(\''+hk[i]+'\')"':'')+'>'+(f?(em[i]?'<u>'+em[i]+'</u>':'')+ic+'<i>'+esc(f.t.split(' ')[0])+'</i>':(em[i]||''))+'</div>'}return r};
   return '<div class="bd"><div class="bl">'+row(false,'🕊️','P',8,{7:'🏆'},{7:'win'})+'</div><div class="bf">'+row(true,'🔥','E',8,{2:'⚖️',4:'💀',7:'☠️'},{2:'acc',4:'kill',7:'lose'})+'</div></div>';
@@ -134,7 +250,7 @@ function showOv(l){
 const HINTR={D:'Wähle im Vorstand immer den friedlichen Weg und finde die Spione.',A:'Du kennst einen Spion (sonst niemanden). Lenke die Diplomaten, aber verrate dich nicht – wirst du angeklagt oder hingerichtet, gewinnen die Spione sofort.',S:'Eskaliere heimlich im Vorstand, ohne aufzufliegen. Schütze den Tyrannen.',T:'Du führst die Spione an. Sie kennen dich, du kennst sie nicht. Fall nicht auf!'};
 function roleH(){
   const m=S.me,L=S.pl;
-  let h='<div class="role" style="background:'+RC[m.role][1]+'">'+RC[m.role][0]+'</div><div class="panel"><small>'+HINTR[m.role]+'</small></div>';
+  let h='<div class="role" style="background:'+RC[m.role][1]+'">'+RC[m.role][0]+'</div><div class="panel"><b>'+((m.role=='S'||m.role=='T')?'😈 Du gehörst zu den Spionen':'🕊️ Du gehörst zu den Diplomaten')+'</b><br><small>'+HINTR[m.role]+'</small></div>';
   if(m.role=='S')h+='<div class="panel">Deine Leute: <b>'+L.filter(p=>(p.role=='S'||p.role=='T')&&p.id!=m.id).map(p=>esc(p.name)+(p.role=='T'?' (Tyrann)':'')).join(', ')+'</b></div>';
   if(m.role=='A')h+='<div class="panel">Ein Spion, den du kennst: <b>'+L.filter(p=>p.role=='S'&&p.id!=m.id).map(p=>esc(p.name)).join(', ')+'</b></div>';
   if(S.priv.length)h+='<div class="panel priv">'+S.priv.map(esc).join('<br>')+'</div>';
@@ -143,7 +259,7 @@ function roleH(){
 let rt=null,rd=0;
 function roleOpen(){if(!S||!S.me.role)return;rd=Date.now();clearTimeout(rt);let o=document.getElementById('roleov');if(!o){o=document.createElement('div');o.id='roleov';document.body.appendChild(o)}o.innerHTML=roleH()}
 function roleClose(){clearTimeout(rt);const o=document.getElementById('roleov');if(o)o.remove()}
-function roleUp(){if(!document.getElementById('roleov'))return;clearTimeout(rt);if(Date.now()-rd>500)roleClose();else rt=setTimeout(roleClose,3000)}
+function roleUp(){roleClose()}
 function setTop(html){const t=document.getElementById('topbar');if(t._h!==html){t.innerHTML=html;t._h=html}}
 const RULES=`<h3>Worum geht es?</h3>
 <p>Diplomaten wollen historische Krisen friedlich lösen. Heimliche Spione wollen, dass sie eskalieren. Gespielt wird zusammen am Tisch: Jeder hat sein Handy, geredet, verdächtigt und geblufft wird laut.</p>
@@ -157,12 +273,12 @@ const RULES=`<h3>Worum geht es?</h3>
 <ol><li><b>Krise:</b> Alle sehen eine historische Krise mit zwei Reaktionen: dem friedlichen Weg und dem Eskalationsrisiko.</li>
 <li><b>Vorstand:</b> Der Vorstandschef (reihum) wählt 2 Mitglieder. Er selbst sitzt automatisch im Vorstand, sich selbst kann er nicht wählen.</li>
 <li><b>Vorstandswahl:</b> Alle anderen Spieler stimmen offen mit Ja oder Nein ab. Die Vorstandsmitglieder stimmen nicht mit. Die Mehrheit entscheidet. Redet vorher laut darüber, wem ihr vertraut!</li>
-<li><b>Abgelehnt?</b> Dann wird der nächste Spieler Vorstandschef, die Krise bleibt dieselbe. Kommt dreimal in Folge keine Vorstandskoalition zustande, bekommen die Spione einen Punkt (eine Eskalation).</li>
+<li><b>Abgelehnt?</b> Dann darf derselbe Vorstandschef <b>einen zweiten Vorstand</b> bestimmen. Wird auch dieser abgelehnt, ist der Vorstand <b>gescheitert</b> (groß für alle sichtbar), und der nächste Spieler wird Vorstandschef. Scheitert der Vorstand dreimal, bekommen die Spione einen Punkt (eine Eskalation).</li>
 <li><b>Geheime Wahl:</b> Jedes Vorstandsmitglied wählt heimlich „Friedlich“ oder „Eskalieren“. Diplomaten müssen friedlich wählen, Spione dürfen eskalieren.</li>
 <li><b>Ergebnis:</b> Schon eine Eskalationsstimme lässt die Krise eskalieren. Alle sehen, wie viele Eskalationsstimmen es gab, aber nicht von wem. Dann wird diskutiert, wer es war.</li></ol>
 <h3>Spielbrett und Sonderplätze</h3>
 <p>Oben stehen zwei Leisten mit je 8 Plätzen: 🕊️ gelöste Krisen und 🔥 Eskalationen. Tippe auf einen Sonderplatz, um eine Erklärung zu sehen.</p>
-<ul><li>⚖️ <b>Stufe 3 – Anklage:</b> Einmal pro Spiel darf jemand vor der Vorstandswahl eine Anklage beantragen. Stimmt die Mehrheit zu, nennt er einen Verdächtigen als Tyrannen, und alle stimmen ab. Trifft es den Tyrannen, gewinnen die Diplomaten sofort. Trifft es den Botschafter, gewinnen die Spione sofort. Sonst bekommen die Spione eine Eskalation.</li>
+<ul><li>⚖️ <b>Stufe 3 – Anklage:</b> Einmal pro Spiel darf der amtierende Vorstandschef eine Anklage aussprechen. Er nennt einen Verdächtigen als Tyrannen, alle außer dem Angeklagten stimmen ab. Trifft es den Tyrannen, gewinnen die Diplomaten sofort. Trifft es den Botschafter, gewinnen die Spione sofort. Sonst bekommt keine Seite einen Punkt.</li>
 <li>💀 <b>Stufe 5 – Direkte Hinrichtung durch den Vorstandschef:</b> Der Vorstandschef darf einen Spieler hinrichten, dessen Rolle wird aufgedeckt. War es der Tyrann, gewinnen die Diplomaten. War es der Botschafter, gewinnen die Spione sofort. War es ein Spion, bekommt ein zufälliger Diplomat (nie der Botschafter) ein geheimes Angebot, die Seite zu wechseln.</li></ul>
 <h3>Wer gewinnt?</h3>
 <ul><li><b>Diplomaten:</b> 8 gelöste Krisen, oder der Tyrann wird angeklagt oder hingerichtet.</li>
@@ -178,6 +294,7 @@ const RULES=`<h3>Worum geht es?</h3>
 <li>Geredet wird laut: Fragt nach, verdächtigt und verteidigt euch. Das Handy übernimmt nur die geheimen Teile und die Zählung.</li>
 <li>Das Spiel dauert etwa 30 bis 45 Minuten.</li></ul>`;
 function draw(){document.body.classList.toggle('home',!S);
+  if(S&&S.ph=='over'&&endState==2){roleClose();setTop('');$.innerHTML=endH();return}
   setTop(S?`<div class="top"><b style="display:flex;align-items:center;gap:8px">${avh(S.me.av,34)}${esc(S.me.name)}</b><span>${S.me.role?`<button class="sm" id="rb" oncontextmenu="return false" ontouchstart="event.preventDefault();roleOpen()" ontouchend="roleUp()" ontouchcancel="roleUp()" onmousedown="roleOpen()" onmouseup="roleUp()" onmouseleave="roleUp()">Rolle &amp; Infos</button> `:''}<button class="sm" onclick="info=true;draw()">ℹ️ Verlauf</button></span></div>`:'');
   const ro=document.getElementById('roleov');if(ro&&S&&S.me.role)ro.innerHTML=roleH();
   if(!S){$.innerHTML='<div class="ttl"><span class="orn">✦ ─── ✦</span><h1 class="gt">DIPLOMAT</h1><span class="orn sub">── Vertraue niemandem ──</span></div><div class="hero"><img src="/bg.jpg" alt=""></div><input id="n" maxlength="14" placeholder="Dein Name" autocomplete="off"><button class="go" onclick="join()">Beitreten</button><details class="rules"><summary>📖 Spielregeln &amp; Anleitung</summary><div class="rb">'+RULES+'</div></details><details class="rules"><summary>📲 Als App auf dem Handy installieren</summary><div class="rb"><h3>iPhone (Safari)</h3><ol><li>Link in <b>Safari</b> öffnen.</li><li>Unten auf das Teilen-Symbol (Quadrat mit Pfeil) tippen.</li><li><b>„Zum Home-Bildschirm“</b> wählen und bestätigen.</li></ol><h3>Android (Chrome)</h3><ol><li>Link in <b>Chrome</b> öffnen.</li><li>Oben rechts auf die drei Punkte tippen.</li><li><b>„App installieren“</b> oder „Zum Startbildschirm hinzufügen“ wählen.</li></ol><p>Danach startet das Spiel mit eigenem Symbol im Vollbild, ohne Adressleiste. Es ist dieselbe Seite, ihr braucht keinen App Store.</p></div></details>';return}
@@ -187,10 +304,12 @@ function draw(){document.body.classList.toggle('home',!S);
   let h='';
   const ns=[0,0,0,0,0,2,2,3,3,4,4][n]||0;
   h+=boardH(null)+(hintTxt?'<div class="hintbar" onclick="hintTxt=null;draw()">'+hintTxt+'<br><small style="color:#444">Tippen zum Schließen</small></div>':'');
+  h+=phaseBar();
   h+='<div class="board"><span>🕊️ noch '+(8-S.sol)+' bis Frieden</span><span>🔥 noch '+(8-S.esc)+' bis Eskalation</span></div>';
   if(n>=5)h+='<div class="board"><span>😈 Zu Beginn: '+ns+' Spione (inkl. Tyrann)</span><span>🕊️ '+(n-ns)+' Diplomaten</span></div>';
   h+=L.map(p=>'<div class="p'+(p.dead?' dead':'')+'"><span>'+(p.dead?'💀 ':'')+avh(p.av,34)+'<span>'+esc(p.name)+(p.bot?' 🤖':'')+'</span>'+(p.id==S.pres&&ph!='lobby'?' 🎩':'')+(S.team.includes(p.id)?' 👥':'')+(p.on?'':' ⚠️')+((p.role&&(ph=='over'||p.dead))?' <small>['+RC[p.role][0]+']</small>':'')+'</span>'+((m.host&&ph=='lobby'&&p.id!=m.id)?'<button class="kb" onclick="act(\'kick\',\''+p.id+'\')">✕</button>':'')+'</div>').join('');
   let s='',c=S.card;
+  const accH=S.acc===true||!m.alive?'':S.esc<3?'<small>⚖️ Anklage möglich ab 3 Eskalationen (nur der Vorstandschef).</small>':m.id==S.pres?'<button class="acb" onclick="act(\'acc\')">⚖️ '+(S.acc=='said'?'Ausgesprochene Anklage jetzt durchführen':'Anklage aussprechen (1× pro Spiel)')+'</button>':(S.acc=='said'?'<small>⚖️ Eine Anklage wurde ausgesprochen und bleibt bestehen, bis sie durchgeführt ist.</small>':'<small>⚖️ Anklage: nur der Vorstandschef darf sie aussprechen.</small>');
   const cardH=c?'<div class="card"><b>'+esc(c.t)+'</b><p>'+esc(c.s)+'</p>'+c.o.map(o=>'<div class="opt"><b>'+(o.k=='P'?'🕊️ Friedlicher Weg:':'🔥 Eskalationsrisiko:')+'</b> '+esc(o.x)+'</div>').join('')+'</div>':'';
   const lvH=S.lv?'<small>Letzte Vorstandswahl: '+S.lv.map(x=>esc(x[0])+(x[1]?' ✅':' ❌')).join(', ')+'</small>':'';
   const yn=(t)=>!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+' abgestimmt</p>':'<div class="row"><button class="ja" onclick="act(\''+t+'\',true)">JA</button><button class="nein" onclick="act(\''+t+'\',false)">NEIN</button></div>';
@@ -200,16 +319,20 @@ function draw(){document.body.classList.toggle('home',!S);
     if(m.host&&/[?&]test/.test(location.search))s+='<p><small>Testmodus:</small></p><div class="row"><button onclick="act(\'bot\')">+ Bot</button><button onclick="act(\'fill\')">Auf 7 füllen</button></div>';
     // TESTMODUS-END
   }else if(ph=='team'){
-    s=cardH+(S.rej?'<p>'+lvH+'<br><small>Abgelehnte Vorstände: '+S.rej+'/3 – bei 3 bekommen die Spione einen Punkt.</small></p>':'')+(m.id==S.pres?'<p>Du bist Vorstandschef und automatisch im Vorstand. Wähle 2 weitere Mitglieder ('+sel.length+'/2):</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="'+(sel.includes(p.id)?'on':'')+'" onclick="tg(\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join('')+'<button class="go" '+(sel.length==2?'':'disabled')+' onclick="act(\'team\',sel)">Vorstand bestätigen</button>':'<p>Vorstandschef '+pres+' stellt den Vorstand zusammen…</p>')+((S.acc||!m.alive)?'':S.esc<3?'<small>⚖️ Anklage möglich ab 3 Eskalationen</small>':'<button onclick="act(\'acc\')">⚖️ Anklage beantragen (1× pro Spiel)</button>');
+    s=cardH+(S.sec?'<div class="panel warn">❗ <b>Zweiter Vorstand:</b> Der erste Vorstand wurde abgelehnt. '+(m.id==S.pres?'Du darfst':esc(nm(S.pres))+' darf')+' jetzt einen neuen Vorstand bestimmen. Wird auch dieser abgelehnt, scheitert der Vorstand.</div>':'')+(S.rej?'<p><small>Gescheiterte Vorstandsrunden: '+S.rej+'/3 – bei 3 bekommen die Spione einen Punkt.</small></p>':'')+(m.id==S.pres?'<p>Du bist Vorstandschef und automatisch im Vorstand. Wähle 2 weitere Mitglieder ('+sel.length+'/2):</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="'+(sel.includes(p.id)?'on':'')+'" onclick="tg(\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join('')+'<button class="go" '+(sel.length==2?'':'disabled')+' onclick="act(\'team\',sel)">Vorstand bestätigen</button>':'<p>Vorstandschef '+pres+' stellt den Vorstand zusammen…</p>')+accH;
   }else if(ph=='tvote'){
     s=cardH+'<p>Vorstandschef <b>'+pres+'</b> schlägt den Vorstand vor: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p>'+(inTeam?'<p>Du sitzt in diesem Vorstand und stimmst nicht mit ab. Die anderen entscheiden offen ('+S.voted.length+'/'+S.vn+').</p>':!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+S.vn+' abgestimmt</p>':'<p><small>Redet offen: Vertraut ihr diesem Vorstand? Die Mehrheit entscheidet.</small></p><div class="row"><button class="ja" onclick="act(\'tv\',true)">JA</button><button class="nein" onclick="act(\'tv\',false)">NEIN</button></div>');
   }else if(ph=='vote'){
     s=cardH+'<p>Vorstand: <b>'+S.team.map(i=>esc(nm(i))).join(', ')+'</b></p>'+lvH+(inTeam&&!voted?'<p>Heimliche Wahl:</p><div class="row"><button class="go" onclick="act(\'cv\',\'P\')">🕊️ Friedlich</button><button class="nein" onclick="act(\'cv\',\'E\')">🔥 Eskalieren</button></div>':'<p>Der Vorstand wählt heimlich… '+S.voted.length+'/3</p>');
   }else if(ph=='result'||(ph=='over'&&S.res)){
-    s=(S.res?'<h2>'+(S.res.esc?'🔥 Eskaliert':'🕊️ Gelöst')+'</h2><p>'+(S.res.forced?'Dreimal keine Vorstandskoalition – die Spione bekommen einen Punkt.':S.res.ne+'× Eskalation, '+S.res.np+'× friedlich (nicht sichtbar, von wem)')+'</p>':'')+((ph=='result'&&m.id==S.pres)?'<button class="go" onclick="act(\'next\')">Nächste Runde</button>':ph=='result'?'<p>Warte auf '+pres+'…</p>':'');
+    s=(S.res?'<h2>'+(S.res.esc?'🔥 Eskaliert':'🕊️ Gelöst')+'</h2><p>'+(S.res.forced?'Dreimal ist der Vorstand gescheitert – die Spione bekommen einen Punkt.':S.res.ne+'× Eskalation, '+S.res.np+'× friedlich (nicht sichtbar, von wem)')+'</p>':'')+((ph=='result'&&m.id==S.pres)?'<button class="go" onclick="act(\'next\')">Nächste Runde</button>':ph=='result'?'<p>Warte auf '+pres+'…</p>':'');
   }
-  if(ph=='avote')s='<p>⚖️ '+(S.vq=='hold'?esc(nm(S.asker))+' beantragt eine Anklage. Durchführen?':'Anklage gegen <b>'+esc(nm(S.asp))+'</b>. Wirklich anklagen?')+'</p>'+yn('av');
-  if(ph=='apick')s=m.id==S.asker?'<p>Wen klagst du als Tyrann an?</p>'+L.filter(p=>p.id!=m.id).map(p=>'<button onclick="act(\'ap\',\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join(''):'<p>'+esc(nm(S.asker))+' wählt einen Verdächtigen…</p>';
+  if(ph=='avote'){
+    const vt=L.filter(p=>!p.dead&&p.id!=S.asp).length;
+    s='<p>⚖️ Anklage gegen <b>'+esc(nm(S.asp))+'</b>: Ist diese Person der Tyrann? Soll die Anklage durchgeführt werden?</p><div class="panel warn">Der Angeklagte darf bei dieser Abstimmung <b>nicht mitstimmen</b>. Die Mehrheit der übrigen Spieler entscheidet.</div>'
+      +(m.id==S.asp?'<p>🚫 <b>Du bist angeklagt und darfst nicht mitstimmen.</b><br><small>Warte auf die anderen ('+S.voted.length+'/'+vt+').</small></p>':!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+vt+' abgestimmt</p>':'<div class="row"><button class="ja" onclick="act(\'av\',true)">JA</button><button class="nein" onclick="act(\'av\',false)">NEIN</button></div>');
+  }
+  if(ph=='apick')s=m.id==S.asker?'<p>⚖️ <b>Anklage:</b> Wen verdächtigst du, der Tyrann zu sein? Die Anklage dient nur dazu, den Tyrannen zu finden.</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'ap\',\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join(''):'<p>⚖️ '+esc(nm(S.asker))+' hat eine Anklage ausgesprochen und wählt einen Verdächtigen…</p>';
   if(ph=='kill')s=m.id==S.pres?'<p>⚔️ <b>Direkte Hinrichtung durch den Vorstandschef</b> (Stufe 5): Du darfst einen Spieler hinrichten. Seine Rolle wird danach aufgedeckt.</p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button class="nein" onclick="act(\'ki\',\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join(''):'<p>⚔️ Der Vorstandschef '+pres+' entscheidet über eine Hinrichtung…</p>';
   if(ph=='offer'){
     const o=S.offer;
@@ -219,10 +342,9 @@ function draw(){document.body.classList.toggle('home',!S);
     else s='<p style="text-align:center">🌙 <b>Ein Spion wurde hingerichtet.</b><br>Eine geheime Nachricht wird zugestellt …<br><small>Bitte kurz warten.</small></p>';
   }
   if(ph=='guess')s=!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>🎯 Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+'</p>':'<p>🎯 <b>Letzte Chance der Spione.</b> Alle Handys zeigen dasselbe. Tippe, wer der Botschafter sein könnte. <small>(Nur die Wahl der Spione zählt.)</small></p>'+L.filter(p=>!p.dead&&p.id!=m.id).map(p=>'<button onclick="act(\'nv\',\''+p.id+'\')">'+avh(p.av,26)+esc(p.name)+'</button>').join('');
-  if(ph=='over')s+='<h2>'+(S.win=='D'?'🕊️ Diplomaten gewinnen':'😈 Spione gewinnen')+'</h2><p>'+esc(S.why)+'</p>'+(m.host?'<button class="go" onclick="act(\'new\')">Neues Spiel (Lobby)</button>':'');
   if(m.host&&ph!='lobby'&&ph!='over')s+='<button onclick="if(confirm(\'Spiel abbrechen und zurück zur Lobby?\'))act(\'new\')">Spiel neu starten (Host)</button>';
   h+='<div class="panel">'+s+'</div>';
-  if(info)h+='<div id="ov"><div class="ovb"><div class="top"><b>Verlauf</b><button class="sm" onclick="info=false;draw()">✕ Schließen</button></div><div class="panel"><b>Krisen bisher</b>'+(S.hist.length?S.hist.map((x,i)=>'<div>'+(i+1)+'. '+(x.e?'🔥':'🕊️')+' '+esc(x.t)+' – '+(x.e?'eskaliert':'gelöst')+'</div>').join(''):'<div><small>Noch keine Krise.</small></div>')+'</div><div class="panel log"><b>Ereignisse</b>'+S.log.map(x=>'<div>'+esc(x)+'</div>').join('')+'</div></div></div>';
+  if(info)h+='<div id="ov"><div class="ovb"><div class="top"><b>Verlauf</b><button class="sm" onclick="info=false;draw()">✕ Schließen</button></div>'+phaseBar()+'<div class="panel"><b>Krisen bisher</b>'+(S.hist.length?S.hist.map((x,i)=>'<div style="margin:5px 0">'+(i+1)+'. '+(x.e?'🔥':'🕊️')+' '+esc(x.t)+' – '+(x.e?'eskaliert':'gelöst')+'</div>').join(''):'<div><small>Noch keine Krise.</small></div>')+'</div><h3 style="margin:18px 0 8px">Ereignisse (pro Runde)</h3>'+logH()+'</div></div>';
   $.innerHTML=h;
 }
 if(id)connect();else draw();

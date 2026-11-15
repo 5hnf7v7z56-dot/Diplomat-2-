@@ -1,6 +1,6 @@
 // Diplomat – Prototyp. Start: node server.js
 const http=require('http'),fs=require('fs'),os=require('os'),cr=require('crypto');
-const PORT=process.env.PORT||3000,P={},NEED=1;let G,EV=0;
+const PORT=process.env.PORT||3000,P={},NEED=1;let G,EV=0,FXN=0;
 const CARDS=[
 ['Faschoda 1898','Britische und französische Truppen erreichen gleichzeitig dasselbe Fort im Sudan. Beide wollen die Region und drohen mit Krieg.','Bleiben und die Region fordern. Stärke zeigen, aber Krieg möglich.','Rückzug anbieten gegen Zugeständnisse woanders. Frieden, aber Gesichtsverlust.'],
 ['Juli-Krise 1914','Ein serbischer Attentäter erschießt den österreichischen Thronfolger. Österreich stellt Serbien ein hartes Ultimatum, Russland stützt Serbien.','Das Heer mobilmachen. Druck für Verhandlungen, aber die Gegner machen auch mobil.','Sofort Gespräche anbieten und die Truppen daheim lassen. Zeit gewinnen, aber die Verbündeten fühlen sich im Stich gelassen.'],
@@ -30,14 +30,14 @@ const CARDS=[
 const PA='BBAABABBBABB'+'AAAAAAAAAAAA';CARDS.forEach((c,i)=>{if(PA[i]=='B'){const t=c[2];c[2]=c[3];c[3]=t}}); // [2]=friedlicher Weg, [3]=Eskalation
 const freeAv=()=>{const t=new Set(Object.values(P).map(p=>p.av)),f=[...Array(30).keys()].filter(i=>!t.has(i));return f.length?f[Math.random()*f.length|0]:0};
 const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
-const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,rej:0,lv:null,opts:[],notes:{},k4:false,back:null,nv:{},deck:[],win:null,why:'',last:null};for(const p of Object.values(P)){p.role=null;p.dead=false;p.conv=false}};
+const reset=()=>{G={ph:'lobby',order:Object.keys(P),log:[],sol:0,esc:0,hist:[],idx:0,pres:null,card:null,team:[],votes:{},res:null,acc:false,vq:null,asker:null,asp:null,rej:0,round:0,elec:[],second:false,fx:null,lv:null,opts:[],notes:{},k4:false,back:null,nv:{},deck:[],win:null,why:'',last:null};for(const p of Object.values(P)){p.role=null;p.dead=false;p.conv=false}};
 reset();
-const log=m=>G.log.push(m),nm=i=>P[i].name,al=()=>G.order.filter(i=>!P[i].dead),RN={D:'Diplomat',A:'Botschafter',S:'Spion',T:'Tyrann'};
+const log=(m,k)=>{G.log.push({m,k:k||'sys',n:G.round});if(G.log.length>500)G.log.shift()},fx=(type,d)=>{G.fx=Object.assign({n:++FXN,type},d)},nm=i=>P[i].name,al=()=>G.order.filter(i=>!P[i].dead),RN={D:'Diplomat',A:'Botschafter',S:'Spion',T:'Tyrann'};
 const addH=(t,e)=>{G.hist.push({t,e});EV++;G.last={t,e}};
-const win=(w,why)=>{G.ph='over';G.win=w;G.why=why;log(why)};
+const win=(w,why)=>{G.ph='over';G.win=w;G.why=why;log((w=='S'?'😈 ':'🕊️ ')+why,'win')};
 function round(){
   if(!G.deck.length)G.deck=shuf(CARDS.map((_,i)=>i));
-  G.pres=G.order[G.idx];G.card=G.deck.shift();G.team=[];G.votes={};G.res=null;G.rej=0;G.lv=null;G.ph='team';
+  G.pres=G.order[G.idx];G.card=G.deck.shift();G.team=[];G.votes={};G.res=null;G.rej=0;G.lv=null;G.second=false;G.ph='team';G.round++;log(CARDS[G.card][0],'round');
   const c=CARDS[G.card];G.opts=shuf([{k:'P',x:c[2]},{k:'E',x:c[3]}]);
 }
 function start(){
@@ -54,24 +54,33 @@ function endDip(){
 function resolve(){
   const ne=Object.values(G.votes).filter(c=>c=='E').length,esc=ne>=NEED;
   G.res={ne,np:3-ne,esc};esc?G.esc++:G.sol++;addH(CARDS[G.card][0],esc);
-  log(CARDS[G.card][0]+': '+(esc?'eskaliert ('+ne+' Eskalationsstimme'+(ne>1?'n':'')+')':'gelöst'));
+  log((esc?'🔥 Eskaliert ('+ne+' Eskalationsstimme'+(ne>1?'n':'')+')':'🕊️ Gelöst – alle friedlich'),esc?'res-e':'res-p');
   if(G.sol>=8)endDip();
   else if(esc){if(!esc1('result'))G.ph='result'}
   else G.ph='result';
 }
 function nextChair(){do{G.idx=(G.idx+1)%G.order.length}while(P[G.order[G.idx]].dead);G.pres=G.order[G.idx]}
 function ttally(){
-  const v=Object.entries(G.votes),y=v.filter(e=>e[1]).length,ok=y*2>v.length;
+  const v=Object.entries(G.votes),y=v.filter(e=>e[1]).length,ok=y*2>v.length,att=G.second?2:1;
   G.lv=v.map(([i,b])=>[nm(i),b]);
-  log('Vorstandswahl: '+y+' Ja / '+(v.length-y)+' Nein – '+(ok?'angenommen':'abgelehnt'));
+  const rec={n:G.elec.length+1,chair:nm(G.pres),team:G.team.map(nm),yes:v.filter(e=>e[1]).map(e=>nm(e[0])),no:v.filter(e=>!e[1]).map(e=>nm(e[0])),ok,att};
+  G.elec.push(rec);
+  log('Vorstandswahl #'+rec.n+' ('+att+'. Versuch)\nVorstand: '+rec.team.join(', ')+' (Chef: '+rec.chair+')\n'+(ok?'✅ ANGENOMMEN':'❌ ABGELEHNT')+' – '+y+' Ja / '+(v.length-y)+' Nein\nJa: '+(rec.yes.join(', ')||'–')+'\nNein: '+(rec.no.join(', ')||'–'),ok?'elec-ok':'elec-no');
   G.votes={};
-  if(ok){G.rej=0;G.ph='vote';return}
-  G.rej++;
+  if(ok){G.rej=0;G.second=false;fx('elec',{rec,res:'ok'});G.ph='vote';return}
+  if(!G.second){
+    G.second=true;G.team=[];fx('elec',{rec,res:'again',chair:nm(G.pres)});G.ph='team';
+    log(nm(G.pres)+' darf einen zweiten Vorstand bestimmen.','elec-no');return}
+  G.second=false;G.rej++;
   if(G.rej>=3){
     G.rej=0;G.esc++;addH(CARDS[G.card][0]+' (keine Koalition)',true);
-    G.res={forced:true,esc:true};log('Dreimal keine Vorstandskoalition – die Spione bekommen einen Punkt');
+    G.res={forced:true,esc:true};log('❌ VORSTAND GESCHEITERT – dreimal keine Koalition. Die Spione bekommen einen Punkt.','elec-fail');
+    fx('elec',{rec,res:'fail',forced:true,rej:3});
     if(!esc1('result'))G.ph='result';
-  }else{nextChair();G.team=[];G.ph='team'}
+  }else{
+    log('❌ VORSTAND GESCHEITERT – auch der zweite Vorstand wurde abgelehnt ('+G.rej+'/3). Der nächste Spieler wird Vorstandschef.','elec-fail');
+    nextChair();G.team=[];G.ph='team';fx('elec',{rec,res:'fail',forced:false,rej:G.rej,chair:nm(G.pres)});
+  }
 }
 function gtally(){
   const c={};
@@ -82,34 +91,35 @@ function gtally(){
 }
 function esc1(back){
   if(G.esc>=8){win('S','8 Eskalationen – die Spione gewinnen!');return true}
-  if(G.esc==5&&!G.k4){G.k4=true;G.back=back;G.ph='kill';log('Stufe 5: Direkte Hinrichtung – der Vorstandschef darf einen Spieler hinrichten');return true}
+  if(G.esc==5&&!G.k4){G.k4=true;G.back=back;G.ph='kill';log('⚔️ Stufe 5: Direkte Hinrichtung – der Vorstandschef darf einen Spieler hinrichten','kill');return true}
   return false;
 }
 function offerStart(){
   const c=al().filter(i=>P[i].role=='D');
   if(!c.length){G.ph=G.back;return}
   G.offer={to:c[Math.random()*c.length|0],st:'wait',n:(G.offer?G.offer.n:0)+1};
-  G.ph='offer';log('Ein Spion wurde hingerichtet. Eine geheime Nachricht wird zugestellt …');
+  G.ph='offer';log('📩 Ein Spion wurde hingerichtet. Eine geheime Nachricht wird zugestellt …','offer');
   const n=G.offer.n;setTimeout(()=>{if(G.ph=='offer'&&G.offer&&G.offer.n==n){offerEnd(false);bc()}},180000);
 }
 function offerEnd(yes){
   const o=G.offer,t=o.to,nt=(i,m)=>G.notes[i]&&G.notes[i].push(m);
   if(yes){
-    P[t].role='S';P[t].conv=true;
+    P[t].role='S';P[t].conv=true;fx('switch',{});
     nt(t,'Du hast das Angebot angenommen und bist jetzt Spion. Deine Mitstreiter: '+G.order.filter(i=>i!=t&&!P[i].dead&&(P[i].role=='S'||P[i].role=='T')).map(nm).join(', ')+'.');
     for(const i of G.order)if(i!=t&&(P[i].role=='S'||P[i].role=='T'))nt(i,nm(t)+' hat das Angebot angenommen und ist jetzt Spion.');
   }else for(const i of G.order)if(P[i].role=='S'||P[i].role=='T')nt(i,'Das Angebot wurde abgelehnt. Es bleibt bei euch.');
-  log('Die Nachricht wurde zugestellt.');G.offer=null;G.ph=G.back;
+  log(yes?'📩 Ein neuer Spion ist dem Team beigetreten.':'📩 Die Nachricht wurde zugestellt.','offer');G.offer=null;G.ph=G.back;
 }
 function atally(){
-  const y=Object.values(G.votes).filter(Boolean).length,ok=y*2>al().length;
-  if(G.vq=='hold'){if(ok){G.ph='apick';log('Anklage genehmigt')}else{G.acc=false;G.ph='team';log('Anklage abgelehnt')}return}
-  if(!ok){G.ph='team';log('Die Mehrheit klagt '+nm(G.asp)+' nicht an');return}
-  if(P[G.asp].role=='T')return win('D',nm(G.asp)+' war der Tyrann – die Diplomaten gewinnen!');
-  if(P[G.asp].role=='A')return win('S',nm(G.asp)+' war der Botschafter – die Spione haben ihn angeklagt und gewinnen sofort!');
-  G.esc++;addH('Falsche Anklage',true);log(nm(G.asp)+' war nicht der Tyrann – Spione +1');
-  if(esc1('team'))return;
-  G.ph='team';
+  const t=G.asp,vt=al().filter(i=>i!=t),y=vt.filter(i=>G.votes[i]===true).length,no=vt.length-y,ok=y*2>vt.length;
+  log('⚖️ Abstimmung über die Anklage gegen '+nm(t)+' (der Angeklagte stimmt nicht mit)\n'+(ok?'✅ Anklage durchgeführt':'❌ Mehrheit dagegen – die Anklage bleibt bestehen')+' – '+y+' Ja / '+no+' Nein','acc');
+  G.votes={};
+  if(!ok){G.ph='team';fx('acc',{name:nm(t),ok:false,y,no});return}
+  G.acc=true;
+  if(P[t].role=='T')return win('D',nm(t)+' war der Tyrann – die Diplomaten gewinnen!');
+  if(P[t].role=='A')return win('S',nm(t)+' war der Botschafter – die Spione haben ihn angeklagt und gewinnen sofort!');
+  log('⚖️ '+nm(t)+' war nicht der Tyrann. Keine Seite bekommt einen Punkt.','acc');
+  fx('acc',{name:nm(t),ok:true,y,no});G.ph='team';
 }
 function act(p,a){
   const id=p.id,ph=G.ph,x=a.x,n=G.order.length,bad='Ungültige Aktion',host=G.order[0]==id;
@@ -122,20 +132,20 @@ function act(p,a){
     case 'team':{
       if(ph!='team'||id!=G.pres||!Array.isArray(x)||x.length!=2||new Set(x).size!=2||!x.every(i=>i!=id&&G.order.includes(i)&&!P[i].dead))return bad;
       G.team=[id,...x];G.votes={};G.ph='tvote';
-      log(nm(id)+' schlägt den Vorstand vor: '+G.team.map(nm).join(', '));break}
+      log(nm(id)+' schlägt den Vorstand vor: '+G.team.map(nm).join(', ')+(G.second?' (zweiter Vorstand)':''),'team');break}
     case 'tv':if(ph!='tvote'||P[id].dead||G.team.includes(id)||id in G.votes)return bad;G.votes[id]=!!x;if(Object.keys(G.votes).length==al().filter(i=>!G.team.includes(i)).length)ttally();break;
     case 'cv':
       if(ph!='vote'||!G.team.includes(id)||id in G.votes||(x!='P'&&x!='E'))return bad;
       if(x=='E'&&(P[id].role=='D'||P[id].role=='A'))return 'Als Diplomat musst du friedlich wählen';
       G.votes[id]=x;if(Object.keys(G.votes).length==3)resolve();break;
     case 'next':if(ph!='result'||id!=G.pres)return bad;do{G.idx=(G.idx+1)%n}while(P[G.order[G.idx]].dead);round();break;
-    case 'acc':if(ph!='team'||G.acc||G.esc<3||P[id].dead)return bad;G.acc=true;G.asker=id;G.vq='hold';G.votes={};G.ph='avote';log(nm(id)+' beantragt eine Anklage');break;
-    case 'av':if(ph!='avote'||P[id].dead||id in G.votes)return bad;G.votes[id]=!!x;if(Object.keys(G.votes).length==al().length)atally();break;
-    case 'ap':if(ph!='apick'||id!=G.asker||x==id||!G.order.includes(x)||P[x].dead)return bad;G.asp=x;G.vq='accuse';G.votes={};G.ph='avote';log(nm(id)+' klagt '+nm(x)+' an – Abstimmung');break;
+    case 'acc':if(ph!='team'||id!=G.pres||G.acc===true||G.esc<3||P[id].dead)return bad;G.acc='said';G.asker=id;G.vq='accuse';G.votes={};G.ph='apick';log(nm(id)+' spricht eine Anklage aus – wen verdächtigt er als Tyrann?','acc');break;
+    case 'av':if(ph!='avote'||P[id].dead||id==G.asp||id in G.votes)return bad;G.votes[id]=!!x;if(Object.keys(G.votes).length==al().filter(i=>i!=G.asp).length)atally();break;
+    case 'ap':if(ph!='apick'||id!=G.asker||id!=G.pres||x==id||!G.order.includes(x)||P[x].dead)return bad;G.asp=x;G.vq='accuse';G.votes={};G.ph='avote';log(nm(id)+' klagt '+nm(x)+' an – Abstimmung ohne den Angeklagten','acc');break;
     case 'ki':{
       const t=P[x];
       if(ph!='kill'||id!=G.pres||!t||t.dead||x==id)return bad;
-      t.dead=true;log(nm(x)+' wurde hingerichtet und war: '+RN[t.role]);
+      t.dead=true;log('⚔️ '+nm(x)+' wurde hingerichtet und war: '+RN[t.role],'kill');
       if(t.role=='T')win('D','Der Tyrann wurde hingerichtet – die Diplomaten gewinnen!');
       else if(t.role=='A')win('S',nm(x)+' war der Botschafter – die Spione haben ihn hingerichtet und gewinnen sofort!');
       else if(t.role=='S')offerStart();
@@ -166,18 +176,20 @@ function view(id){
     pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,av:q.av,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
       role:(over||q.dead||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T'))||(me.role=='A'&&q.id==G.amb&&q.role=='S'&&!q.conv))?q.role:null}}),
     pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,offer:ph=='offer'&&G.offer?{mine:G.offer.to==id,st:G.offer.st}:null,voted:Object.keys(ph=='guess'?G.nv:G.votes),res:G.res,rej:G.rej,vn:al().filter(i=>!G.team.includes(i)).length,lv:G.lv,
-    priv:G.notes[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,win:G.win,why:G.why,log:G.log.slice(-40).reverse()};
+    priv:G.notes[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,win:G.win,why:G.why,sec:G.second,rd:G.round,fx:G.fx,log:G.log};
 }
 // TESTMODUS-BEGIN
 let bt=null;const sched=()=>{if(bt)return;bt=setTimeout(()=>{bt=null;if(botStep())bc()},+process.env.BOTMS||1300)};
 function botStep(){
   const ph=G.ph,B=i=>i&&P[i]&&P[i].bot,pick=a=>a[Math.random()*a.length|0],go=(i,o)=>!act(P[i],o);
+  if(ph=='team'&&B(G.pres)&&G.esc>=3&&G.acc!==true&&Math.random()<.3)return go(G.pres,{t:'acc'});
   if(ph=='team'&&B(G.pres))return go(G.pres,{t:'team',x:shuf(al().filter(i=>i!=G.pres)).slice(0,2)});
   if(ph=='tvote'){const b=al().find(i=>B(i)&&!G.team.includes(i)&&!(i in G.votes));if(b)return go(b,{t:'tv',x:Math.random()<.7})}
   if(ph=='vote'){const b=G.team.find(i=>B(i)&&!(i in G.votes));
     if(b){const r=P[b].role;return go(b,{t:'cv',x:((r=='S'||r=='T')&&Math.random()<.6)?'E':'P'})}}
   if(ph=='result'&&B(G.pres))return go(G.pres,{t:'next'});
-  if(ph=='avote'){const b=al().find(i=>B(i)&&!(i in G.votes));if(b)return go(b,{t:'av',x:G.vq=='hold'?true:Math.random()<.5})}
+  if(ph=='avote'){const b=al().find(i=>B(i)&&i!=G.asp&&!(i in G.votes));if(b)return go(b,{t:'av',x:Math.random()<.5})}
+  if(ph=='apick'&&B(G.asker))return go(G.asker,{t:'ap',x:pick(al().filter(i=>i!=G.asker))});
   if(ph=='kill'&&B(G.pres))return go(G.pres,{t:'ki',x:pick(al().filter(i=>i!=G.pres))});
   if(ph=='offer'&&G.offer&&B(G.offer.to))return go(G.offer.to,G.offer.st=='wait'?{t:'op'}:{t:'oa',x:Math.random()<.5});
   if(ph=='guess'){const b=al().find(i=>B(i)&&!(i in G.nv));
@@ -220,6 +232,14 @@ http.createServer((q,r)=>{
   if(u.pathname=='/manifest.webmanifest'){r.writeHead(200,{'Content-Type':'application/manifest+json','Cache-Control':'max-age=3600'});return r.end(JSON.stringify({name:'Diplomat',short_name:'Diplomat',description:'Diplomat – das Gruppenspiel für den Tisch',start_url:'/',scope:'/',display:'standalone',orientation:'portrait',background_color:'#12151c',theme_color:'#12151c',lang:'de',icons:[{src:'/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},{src:'/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'}]}))}
   if(u.pathname=='/sw.js'){r.writeHead(200,{'Content-Type':'application/javascript','Cache-Control':'no-cache'});return r.end("self.addEventListener('install',()=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));self.addEventListener('fetch',()=>{});")}
   if(u.pathname=='/icon-192.png'||u.pathname=='/icon-512.png'||u.pathname=='/apple-touch-icon.png'){const f=u.pathname=='/icon-512.png'?'icon-512.png':'icon-192.png';try{const b=fs.readFileSync(__dirname+'/'+f);r.writeHead(200,{'Content-Type':'image/png','Cache-Control':'max-age=86400'});return r.end(b)}catch(e){r.writeHead(404);return r.end()}}
+  const MED={'/win-spies.jpg':'image/jpeg','/win-diplomats.jpg':'image/jpeg','/switch.mp4':'video/mp4','/war.mp4':'video/mp4','/peace.mp4':'video/mp4'};
+  if(MED[u.pathname]){
+    let b;try{b=fs.readFileSync(__dirname+u.pathname)}catch(e){r.writeHead(404);return r.end()}
+    const h={'Content-Type':MED[u.pathname],'Accept-Ranges':'bytes','Cache-Control':'max-age=86400'},m=/bytes=(\d*)-(\d*)/.exec(q.headers.range||'');
+    if(m){let st=m[1]===''?0:+m[1],en=m[2]===''?b.length-1:Math.min(+m[2],b.length-1);if(m[1]===''&&m[2]!==''){st=Math.max(0,b.length-+m[2]);en=b.length-1}
+      if(st>en||st>=b.length){r.writeHead(416,{'Content-Range':'bytes */'+b.length});return r.end()}
+      r.writeHead(206,Object.assign(h,{'Content-Range':'bytes '+st+'-'+en+'/'+b.length,'Content-Length':en-st+1}));return r.end(b.slice(st,en+1))}
+    r.writeHead(200,Object.assign(h,{'Content-Length':b.length}));return r.end(b)}
   if(u.pathname=='/bg.jpg'){r.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'max-age=86400'});return r.end(fs.readFileSync(__dirname+'/bg.jpg'))}
   r.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});
   r.end(fs.readFileSync(__dirname+'/index.html'));
