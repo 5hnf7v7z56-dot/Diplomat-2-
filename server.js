@@ -126,7 +126,11 @@ function act(p,a){
   switch(a.t){
     case 'start':if(ph!='lobby'||!host)return bad;if(n<5)return 'Mindestens 5 Spieler nötig';start();break;
     case 'kick':if(ph!='lobby'||!host||x==id||!G.order.includes(x))return bad;G.order=G.order.filter(i=>i!=x);if(P[x].res)P[x].res.end();delete P[x];break;
-    case 'avatar':if(ph!='lobby')return 'Im Spiel kann der Avatar nicht mehr gewechselt werden';if(!Number.isInteger(x)||x<0||x>29||Object.values(P).some(q=>q.id!=id&&q.av===x))return 'Dieser Avatar ist schon vergeben';p.av=x;break;
+    case 'avatar':if(ph!='lobby')return 'Im Spiel kann der Avatar nicht mehr gewechselt werden';if(!Number.isInteger(x)||x<0||x>29||Object.values(P).some(q=>q.id!=id&&q.av===x))return 'Dieser Avatar ist schon vergeben';p.av=x;delete p.photo;p.pv=(p.pv||0)+1;break;
+    case 'photo':{if(ph!='lobby')return 'Im Spiel kann das Bild nicht mehr gewechselt werden';
+      if(x===null){delete p.photo;p.av=freeAv();p.pv=(p.pv||0)+1;break}
+      const m=/^data:image\/jpeg;base64,([A-Za-z0-9+\/=]+)$/.exec(typeof x=='string'?x:'');if(!m||m[1].length>60000)return 'Foto ungültig oder zu groß';
+      p.photo=Buffer.from(m[1],'base64');p.av=-1;p.pv=(p.pv||0)+1;break}
     case 'leave':if(ph!='lobby')return bad;G.order=G.order.filter(i=>i!=id);if(P[id].res)P[id].res.end();delete P[id];return;
     case 'new':if(ph!='lobby'&&host)reset();break;
     case 'team':{
@@ -145,9 +149,9 @@ function act(p,a){
     case 'ki':{
       const t=P[x];
       if(ph!='kill'||id!=G.pres||!t||t.dead||x==id)return bad;
-      t.dead=true;log('⚔️ '+nm(x)+' wurde hingerichtet und war: '+RN[t.role],'kill');
-      if(t.role=='T')win('D','Der Tyrann wurde hingerichtet – die Diplomaten gewinnen!');
-      else if(t.role=='A')win('S',nm(x)+' war der Botschafter – die Spione haben ihn hingerichtet und gewinnen sofort!');
+      t.dead=true;log('⚔️ Vorstandschef '+nm(id)+' hat '+nm(x)+' hingerichtet.\n'+nm(x)+' war: '+RN[t.role],'kill');if(t.role!='T'&&t.role!='A')fx('kill',{chair:nm(id),name:nm(x),role:t.role});
+      if(t.role=='T')win('D','Vorstandschef '+nm(id)+' hat den Tyrannen '+nm(x)+' hingerichtet – die Diplomaten gewinnen!');
+      else if(t.role=='A')win('S','Vorstandschef '+nm(id)+' hat '+nm(x)+' hingerichtet – das war der Botschafter. Die Spione gewinnen sofort!');
       else if(t.role=='S')offerStart();
       else G.ph=G.back;
       break}
@@ -173,7 +177,7 @@ function act(p,a){
 function view(id){
   const me=P[id],ph=G.ph,over=ph=='over',c=G.card!=null&&ph!='lobby'?CARDS[G.card]:null;
   return{ph,sol:G.sol,esc:G.esc,hist:G.hist,ev:EV,last:G.last,me:{id,name:me.name,av:me.av,role:me.role,alive:!me.dead,host:G.order[0]==id},
-    pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,av:q.av,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
+    pl:G.order.map(i=>{const q=P[i];return{id:i,name:q.name,av:q.av,pv:q.photo?q.pv:0,on:!!q.res||!!q.bot,bot:!!q.bot,dead:!!q.dead,
       role:(over||q.dead||i==id||(me.role=='S'&&(q.role=='S'||q.role=='T'))||(me.role=='A'&&q.id==G.amb&&q.role=='S'&&!q.conv))?q.role:null}}),
     pres:G.pres,card:c&&{t:c[0],s:c[1],o:G.opts},team:G.team,offer:ph=='offer'&&G.offer?{mine:G.offer.to==id,st:G.offer.st}:null,voted:Object.keys(ph=='guess'?G.nv:G.votes),res:G.res,rej:G.rej,vn:al().filter(i=>!G.team.includes(i)).length,lv:G.lv,
     priv:G.notes[id]||[],acc:G.acc,asker:G.asker,asp:G.asp,vq:G.vq,win:G.win,why:G.why,sec:G.second,rd:G.round,fx:G.fx,log:G.log};
@@ -201,6 +205,7 @@ const bc=()=>{for(const p of Object.values(P))if(p.res)p.res.write('data: '+JSON
 setInterval(()=>{for(const p of Object.values(P))if(p.res)p.res.write(':\n\n')},20000);
 http.createServer((q,r)=>{
   const u=new URL(q.url,'http://x');
+  if(u.pathname=='/photo'){const pp=P[u.searchParams.get('id')];if(!pp||!pp.photo){r.writeHead(404);return r.end()}r.writeHead(200,{'Content-Type':'image/jpeg','Cache-Control':'max-age=86400','Content-Length':pp.photo.length});return r.end(pp.photo)}
   if(u.pathname=='/events'){
     const p=P[u.searchParams.get('id')];
     if(!p){r.writeHead(404);return r.end()}
@@ -210,7 +215,7 @@ http.createServer((q,r)=>{
     bc();return;
   }
   if(u.pathname=='/api'&&q.method=='POST'){
-    let b='';q.on('data',c=>b+=c);
+    let b='';q.on('data',c=>{b+=c;if(b.length>90000){b='';q.destroy()}});
     q.on('end',()=>{
       let a,out={};
       try{a=JSON.parse(b)}catch{a={}}
