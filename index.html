@@ -143,6 +143,11 @@ button .av{margin-right:6px;vertical-align:middle}
 .sl.P{background:linear-gradient(160deg,#3d5f9e,#122a55);border:2px solid #e6c25a}.sl.E{background:linear-gradient(160deg,#d12a45,#6d0a19);border:2px solid #e6c25a}
 .phrow{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 4px}
 .photob{flex:1;min-width:110px;text-align:center;background:#334155;color:#fff;border:1px solid #64748b;border-radius:10px;padding:11px 8px;font-size:15px;cursor:pointer;font-family:inherit}
+#qrov{position:fixed;inset:0;z-index:45;background:#000e;display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto}
+.qrb{background:#12151c;border:3px solid #fcd34d;border-radius:16px;padding:16px;max-width:380px;width:100%;text-align:center}
+.qrimg{background:#fff;border-radius:12px;padding:4px;margin:10px auto;width:min(80vw,320px)}.qrimg svg{display:block;width:100%;height:auto}
+.qrl{font-size:13px;word-break:break-all;color:#d1d5db;margin:6px 0}
+.qrbtn{background:#334155;border:1px solid #fcd34d;color:#fde68a;width:100%;margin-top:8px}
 </style></head><body><div id="topbar" style="max-width:480px;margin:0 auto;padding-top:12px"></div><div id="app"></div>
 <script>
 let ES=null,S=null,id=localStorage.kr_id,show=false,sel=[],info=false,ev=null;
@@ -278,6 +283,57 @@ async function takePhoto(inp){
     await act('photo',u);
   }catch(e){alert('Das Foto konnte nicht verarbeitet werden. Versuche ein anderes.')}
 }
+/* Minimaler QR-Code-Generator (Byte-Modus, Fehlerkorrektur M, Version 1-10) */
+function makeQR(text){
+  const data=Array.from(new TextEncoder().encode(text)),ECC=[10,16,26,18,24,16,18,22,22,26],NB=[1,1,1,2,2,4,4,4,5,5];
+  const raw=v=>{let r=(16*v+128)*v+64;if(v>=2){const a=Math.floor(v/7)+2;r-=(25*a-10)*a-55;if(v>=7)r-=36}return r};
+  let ver=0,cap=0;
+  for(let v=1;v<=9;v++){cap=Math.floor(raw(v)/8)-ECC[v-1]*NB[v-1];if(4+(v<10?8:16)+8*data.length<=cap*8){ver=v;break}}
+  if(!ver)throw new Error('Text zu lang');
+  const bits=[],put=(val,n)=>{for(let i=n-1;i>=0;i--)bits.push((val>>>i)&1)};
+  put(4,4);put(data.length,ver<10?8:16);data.forEach(b=>put(b,8));
+  put(0,Math.min(4,cap*8-bits.length));while(bits.length%8)bits.push(0);
+  for(let p=0xEC;bits.length<cap*8;p^=0xEC^0x11)put(p,8);
+  const dcw=[];for(let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|bits[i+j];dcw.push(b)}
+  const mul=(x,y)=>{let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x}return z};
+  const rs=(d,deg)=>{const g=Array(deg).fill(0);g[deg-1]=1;let root=1;for(let i=0;i<deg;i++){for(let j=0;j<deg;j++){g[j]=mul(g[j],root);if(j+1<deg)g[j]^=g[j+1]}root=mul(root,2)}
+    const r=Array(deg).fill(0);d.forEach(b=>{const f=b^r.shift();r.push(0);g.forEach((c,i)=>r[i]^=mul(c,f))});return r};
+  const nb=NB[ver-1],el=ECC[ver-1],rc=Math.floor(raw(ver)/8),ns=nb-rc%nb,sl=Math.floor(rc/nb),blocks=[];
+  for(let i=0,k=0;i<nb;i++){const d=dcw.slice(k,k+sl-el+(i<ns?0:1));k+=d.length;const e=rs(d,el);if(i<ns)d.push(0);blocks.push(d.concat(e))}
+  const all=[];for(let i=0;i<blocks[0].length;i++)blocks.forEach((b,j)=>{if(i!=sl-el||j>=ns)all.push(b[i])});
+  const size=ver*4+17,M=Array.from({length:size},()=>Array(size).fill(false)),F=Array.from({length:size},()=>Array(size).fill(false));
+  const set=(x,y,d)=>{M[y][x]=d;F[y][x]=true},gb=(v,i)=>((v>>>i)&1)!=0;
+  for(let i=0;i<size;i++){set(6,i,i%2==0);set(i,6,i%2==0)}
+  const fin=(x,y)=>{for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const d=Math.max(Math.abs(dx),Math.abs(dy)),xx=x+dx,yy=y+dy;if(xx>=0&&xx<size&&yy>=0&&yy<size)set(xx,yy,d!=2&&d!=4)}};
+  fin(3,3);fin(size-4,3);fin(3,size-4);
+  const na=ver==1?0:Math.floor(ver/7)+2,pos=[];
+  if(na){const step=Math.ceil((ver*4+4)/(na*2-2))*2;pos.push(6);for(let p=ver*4+10,k=1;pos.length<na;p-=step)pos.splice(1,0,p)}
+  pos.forEach((px,i)=>pos.forEach((py,j)=>{if((i==0&&j==0)||(i==0&&j==na-1)||(i==na-1&&j==0))return;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(px+dx,py+dy,Math.max(Math.abs(dx),Math.abs(dy))!=1)}));
+  const fmt=mask=>{const d=mask;let r=d;for(let i=0;i<10;i++)r=(r<<1)^((r>>>9)*0x537);const b=((d<<10)|r)^0x5412;
+    for(let i=0;i<=5;i++)set(8,i,gb(b,i));set(8,7,gb(b,6));set(8,8,gb(b,7));set(7,8,gb(b,8));for(let i=9;i<15;i++)set(14-i,8,gb(b,i));
+    for(let i=0;i<8;i++)set(size-1-i,8,gb(b,i));for(let i=8;i<15;i++)set(8,size-15+i,gb(b,i));set(8,size-8,true)};
+  fmt(0);
+  if(ver>=7){let r=ver;for(let i=0;i<12;i++)r=(r<<1)^((r>>>11)*0x1F25);const b=(ver<<12)|r;for(let i=0;i<18;i++){const c=gb(b,i),a=size-11+i%3,bb=Math.floor(i/3);set(a,bb,c);set(bb,a,c)}}
+  for(let i=0,right=size-1;right>=1;right-=2){if(right==6)right=5;for(let v=0;v<size;v++)for(let j=0;j<2;j++){const x=right-j,up=((right+1)&2)==0,y=up?size-1-v:v;if(!F[y][x]&&i<all.length*8){M[y][x]=gb(all[i>>>3],7-(i&7));i++}}}
+  const msk=m=>{for(let y=0;y<size;y++)for(let x=0;x<size;x++){let inv;switch(m){case 0:inv=(x+y)%2==0;break;case 1:inv=y%2==0;break;case 2:inv=x%3==0;break;case 3:inv=(x+y)%3==0;break;case 4:inv=(Math.floor(x/3)+Math.floor(y/2))%2==0;break;case 5:inv=x*y%2+x*y%3==0;break;case 6:inv=(x*y%2+x*y%3)%2==0;break;default:inv=((x+y)%2+x*y%3)%2==0}if(!F[y][x]&&inv)M[y][x]=!M[y][x]}};
+  const pen=()=>{let p=0;const line=g=>{let run=1;for(let i=1;i<size;i++){if(g(i)==g(i-1)){run++;if(run==5)p+=3;else if(run>5)p++}else run=1}
+      for(let i=0;i+11<=size;i++){const s=[0,1,2,3,4,5,6,7,8,9,10].map(k=>g(i+k)?1:0).join('');if(s=='10111010000'||s=='00001011101')p+=40}};
+    for(let y=0;y<size;y++)line(i=>M[y][i]);for(let x=0;x<size;x++)line(i=>M[i][x]);
+    for(let y=0;y<size-1;y++)for(let x=0;x<size-1;x++)if(M[y][x]==M[y][x+1]&&M[y][x]==M[y+1][x]&&M[y][x]==M[y+1][x+1])p+=3;
+    let dark=0;M.forEach(r=>r.forEach(c=>{if(c)dark++}));p+=Math.floor(Math.abs(dark*20-size*size*10)/(size*size))*10;return p};
+  let best=0,bp=1e9;for(let m=0;m<8;m++){msk(m);fmt(m);const p=pen();if(p<bp){bp=p;best=m}msk(m)}
+  msk(best);fmt(best);
+  let d='';for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(M[y][x])d+='M'+(x+4)+' '+(y+4)+'h1v1h-1z';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+(size+8)+' '+(size+8)+'" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="'+d+'" fill="#000"/></svg>';
+}
+
+function showQR(){
+  const u=location.origin+'/';let svg;
+  try{svg=makeQR(u)}catch(e){svg='<p>QR-Code nicht möglich</p>'}
+  const d=document.createElement('div');d.id='qrov';
+  d.innerHTML='<div class="qrb"><h2>📲 Zum Mitspielen scannen</h2><div class="qrimg">'+svg+'</div><p class="qrl">'+esc(u)+'</p><small>Kamera des Handys auf den Code halten, dann den Link antippen.</small><button class="go" onclick="document.getElementById(\'qrov\').remove()">Schließen</button></div>';
+  document.body.appendChild(d);
+}
 let cvRun=0;
 function showOv(l){
   const o=document.getElementById('ov2');if(o)o.remove();
@@ -380,7 +436,7 @@ function draw(){document.body.classList.toggle('home',!S);
   const lvH=S.lv?'<small>Letzte Vorstandswahl: '+S.lv.map(x=>esc(x[0])+(x[1]?' ✅':' ❌')).join(', ')+'</small>':'';
   const yn=(t)=>!m.alive?'<p>💀 Du bist tot – du schaust zu.</p>':voted?'<p>Warten… '+S.voted.length+'/'+L.filter(p=>!p.dead).length+' abgestimmt</p>':'<div class="row"><button class="ja" onclick="act(\''+t+'\',true)">JA</button><button class="nein" onclick="act(\''+t+'\',false)">NEIN</button></div>';
   if(ph=='lobby'){
-    s='<p>'+n+'/10 Spieler (mind. 5)</p>'+(m.host?'<button class="go" onclick="act(\'start\')">Spiel starten</button>':'<p>Warte auf den Host…</p>')+'<p><small>Wähle deinen Avatar:</small></p><div class="avp">'+AV.map((a,i)=>{const tk=L.some(p=>p.av===i&&p.id!=m.id);return '<button class="avb'+(m.av===i?' on':'')+'" '+(tk?'disabled':'')+' onclick="act(\'avatar\','+i+')">'+avh(i,46)+'</button>'}).join('')+'</div><div class="phrow"><label class="photob">📷 Selfie<input type="file" accept="image/*" capture="user" hidden onchange="takePhoto(this)"></label><label class="photob">🖼️ Aus Galerie<input type="file" accept="image/*" hidden onchange="takePhoto(this)"></label>'+(m.av<0?'<button class="photob" onclick="act(\'photo\',null)">✖ Foto entfernen</button>':'')+'</div><small>Dein Foto bleibt nur im Spiel und wird nicht gespeichert. Es verschwindet, wenn du gehst.</small>';s+='<button class="sm" style="margin-top:12px" onclick="leave()">↩️ Zurück / Name ändern</button><details class="rules"><summary>📖 Spielregeln & Anleitung</summary><div class="rb">'+RULES+'</div></details>';
+    s='<p>'+n+'/10 Spieler (mind. 5)</p>'+(m.host?'<button class="go" onclick="act(\'start\')">Spiel starten</button><button class="qrbtn" onclick="showQR()">📲 QR-Code zum Beitreten anzeigen</button>':'<p>Warte auf den Host…</p>')+'<p><small>Wähle deinen Avatar:</small></p><div class="avp">'+AV.map((a,i)=>{const tk=L.some(p=>p.av===i&&p.id!=m.id);return '<button class="avb'+(m.av===i?' on':'')+'" '+(tk?'disabled':'')+' onclick="act(\'avatar\','+i+')">'+avh(i,46)+'</button>'}).join('')+'</div><div class="phrow"><label class="photob">📷 Selfie<input type="file" accept="image/*" capture="user" hidden onchange="takePhoto(this)"></label><label class="photob">🖼️ Aus Galerie<input type="file" accept="image/*" hidden onchange="takePhoto(this)"></label>'+(m.av<0?'<button class="photob" onclick="act(\'photo\',null)">✖ Foto entfernen</button>':'')+'</div><small>Dein Foto bleibt nur im Spiel und wird nicht gespeichert. Es verschwindet, wenn du gehst.</small>';s+='<button class="sm" style="margin-top:12px" onclick="leave()">↩️ Zurück / Name ändern</button><details class="rules"><summary>📖 Spielregeln & Anleitung</summary><div class="rb">'+RULES+'</div></details>';
     // TESTMODUS-BEGIN
     if(m.host&&/[?&]test/.test(location.search))s+='<p><small>Testmodus:</small></p><div class="row"><button onclick="act(\'bot\')">+ Bot</button><button onclick="act(\'fill\')">Auf 7 füllen</button></div>';
     // TESTMODUS-END
