@@ -91,7 +91,7 @@ function gtally(){
 }
 function esc1(back){
   if(G.esc>=8){win('S','8 Eskalationen – die Spione gewinnen!');return true}
-  if(G.esc==5&&!G.k4){G.k4=true;G.back=back;G.ph='kill';log('⚔️ Stufe 5: Direkte Hinrichtung – der Vorstandschef darf einen Spieler hinrichten','kill');return true}
+  if(G.esc==5&&!G.k4){G.k4=true;G.back=back;G.ph='kill';log('⚔️ Stufe 5: Direkte Hinrichtung – der Vorstandschef darf einen Spieler hinrichten','kill');fx('killstart',{chair:nm(G.pres)});return true}
   return false;
 }
 function offerStart(){
@@ -107,8 +107,8 @@ function offerEnd(yes){
     P[t].role='S';P[t].conv=true;fx('switch',{});
     nt(t,'Du hast das Angebot angenommen und bist jetzt Spion. Deine Mitstreiter: '+G.order.filter(i=>i!=t&&!P[i].dead&&(P[i].role=='S'||P[i].role=='T')).map(nm).join(', ')+'.');
     for(const i of G.order)if(i!=t&&(P[i].role=='S'||P[i].role=='T'))nt(i,nm(t)+' hat das Angebot angenommen und ist jetzt Spion.');
-  }else for(const i of G.order)if(P[i].role=='S'||P[i].role=='T')nt(i,'Das Angebot wurde abgelehnt. Es bleibt bei euch.');
-  log(yes?'📩 Ein neuer Spion ist dem Team beigetreten.':'📩 Die Nachricht wurde zugestellt.','offer');G.offer=null;G.ph=G.back;
+  }else{fx('offerno',{});for(const i of G.order)if(P[i].role=='S'||P[i].role=='T')nt(i,'Das Angebot wurde abgelehnt. Es bleibt bei euch.');}
+  log(yes?'📩 Ein neuer Spion ist dem Team beigetreten.':'📩 Das Angebot an einen Diplomaten wurde nicht angenommen. Es bleibt bei den Diplomaten.','offer');G.offer=null;G.ph=G.back;
 }
 function atally(){
   const t=G.asp,vt=al().filter(i=>i!=t),y=vt.filter(i=>G.votes[i]===true).length,no=vt.length-y,ok=y*2>vt.length;

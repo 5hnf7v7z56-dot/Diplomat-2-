@@ -148,6 +148,9 @@ button .av{margin-right:6px;vertical-align:middle}
 .qrimg{background:#fff;border-radius:12px;padding:4px;margin:10px auto;width:min(80vw,320px)}.qrimg svg{display:block;width:100%;height:auto}
 .qrl{font-size:13px;word-break:break-all;color:#d1d5db;margin:6px 0}
 .qrbtn{background:#334155;border:1px solid #fcd34d;color:#fde68a;width:100%;margin-top:8px}
+#tvm{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:18px}
+#tvm .tvb{background:#14213d;border:2px solid #c9a24a;border-radius:18px;padding:18px;max-width:420px;width:100%;text-align:center;max-height:90vh;overflow:auto}
+#tvm.flash .tvb{animation:tvf .5s 6}@keyframes tvf{50%{box-shadow:0 0 0 8px #ff3b3b;background:#3a1020}}
 </style></head><body><div id="topbar" style="max-width:480px;margin:0 auto;padding-top:12px"></div><div id="app"></div>
 <script>
 let ES=null,S=null,id=localStorage.kr_id,show=false,sel=[],info=false,ev=null;
@@ -225,6 +228,21 @@ function onState(){
   }
 }
 const pav=n=>{const p=S.pl.find(x=>x.name==n);return p?avh(p.av,44,p.id):''};
+
+let tvHide='',tvT=null,tvKey='';
+function beep(){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=.15;o.start();setTimeout(()=>{o.stop();c.close()},350)}catch(e){}}
+function nudge(){try{navigator.vibrate&&navigator.vibrate([300,150,300,150,500])}catch(e){}beep();const d=document.getElementById('tvm');if(d){d.classList.remove('flash');void d.offsetWidth;d.classList.add('flash')}}
+function tvModal(ph,m,inTeam,voted,pres){
+  let d=document.getElementById('tvm');
+  const need=ph=='tvote'&&m&&m.alive&&!inTeam&&!voted,key=ph=='tvote'?S.team.join(',')+'|'+S.ev:'';
+  if(!need){if(d)d.remove();clearTimeout(tvT);tvT=null;tvKey='';return}
+  const nm=i=>(S.pl.find(p=>p.id==i)||{}).name||'?',last=S.vn-S.voted.length==1;
+  if(last){if(!tvT){tvT=setTimeout(function rep(){if(!document.getElementById('tvm')&&!(S&&S.ph=='tvote'))return;nudge();tvT=setTimeout(rep,6000)},5000)}}
+  else{clearTimeout(tvT);tvT=null}
+  tvKey=key;if(tvHide==key){if(d)d.remove();return}
+  if(!d){d=document.createElement('div');d.id='tvm';document.body.appendChild(d)}
+  d.innerHTML='<div class="tvb"><h2>🗳️ Vorstandswahl</h2><p><small>Vorstandschef</small><br><b>'+pres+'</b></p><p>schlägt diesen Vorstand vor:</p><div class="fxt">'+S.team.map(i=>'<div>'+pav(nm(i))+'<b>'+esc(nm(i))+'</b></div>').join('')+'</div><p><small>Redet offen. '+S.voted.length+'/'+S.vn+' haben abgestimmt.</small></p><div class="row"><button class="ja" onclick="act(\'tv\',true)">JA</button><button class="nein" onclick="act(\'tv\',false)">NEIN</button></div><button class="sm" onclick="tvHide=tvKey;document.getElementById(\'tvm\').remove()">Später</button></div>';
+}
 function nextFx(){
   if(fxOpen||!fxq.length||!S||S.ph=='over')return;
   const f=fxq.shift();fxOpen=true;
@@ -240,6 +258,10 @@ function nextFx(){
     else{cls='neutral';h='<h2>⚖️ Anklage gegen '+esc(f.name)+'</h2><div class="fxbig mid">'+esc(f.name)+' war <u>nicht</u> der Tyrann</div><p>('+f.y+' Ja / '+f.no+' Nein)</p><p><b>Keine Seite bekommt einen Punkt.</b></p>'}
   }else if(f.type=='kill'){
     cls='fail';h='<div class="fxhuge" style="font-size:30px">⚔️<br>HINRICHTUNG</div><p><small>Vorstandschef</small><br><b style="font-size:20px">'+esc(f.chair)+'</b></p><p>hat hingerichtet:</p>'+team([f.name])+'<div class="fxbig no">'+esc(f.name)+' war: '+RC[f.role][0]+'</div>';
+  }else if(f.type=='killstart'){
+    cls='fail';h='<div class="fxhuge" style="font-size:30px">⚔️<br>HINRICHTUNG<br>BEGINNT</div><p><small>Vorstandschef</small><br><b style="font-size:20px">'+esc(f.chair)+'</b></p><p>darf jetzt einen Spieler hinrichten.</p>';
+  }else if(f.type=='offerno'){
+    cls='good';h='<h2>📩 Übernahmeangebot</h2><div class="fxbig ok">🕊️ NICHT ANGENOMMEN</div><p>Der angesprochene Diplomat hat das Angebot der Spione <b>nicht angenommen</b>.</p><p><small>Es bleibt bei den Diplomaten.</small></p>';
   }else if(f.type=='switch'){
     cls='sw';h='<h2>🔄 Seitenwechsel</h2><video class="fxv" src="/switch.mp4" muted autoplay playsinline webkit-playsinline preload="auto" onclick="this.muted=!this.muted"></video><div class="fxbig no">😈 Ein neuer Spion ist dem Team beigetreten</div>';
   }
@@ -468,6 +490,7 @@ function draw(){document.body.classList.toggle('home',!S);
   h+='<div class="panel">'+s+'</div>';
   if(info)h+='<div id="ov"><div class="ovb"><div class="top"><b>Verlauf</b><button class="sm" onclick="info=false;draw()">✕ Schließen</button></div>'+phaseBar()+'<div class="panel"><b>Krisen bisher</b>'+(S.hist.length?S.hist.map((x,i)=>'<div style="margin:5px 0">'+(i+1)+'. '+(x.e?'🔥':'🕊️')+' '+esc(x.t)+' – '+(x.e?'eskaliert':'gelöst')+'</div>').join(''):'<div><small>Noch keine Krise.</small></div>')+'</div><h3 style="margin:18px 0 8px">Ereignisse (pro Runde)</h3>'+logH()+'</div></div>';
   $.innerHTML=h;
+  tvModal(ph,m,inTeam,voted,pres);
 }
 if(id)connect();else draw();
 </script></body></html>
